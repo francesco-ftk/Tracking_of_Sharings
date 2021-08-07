@@ -8,94 +8,15 @@ from torch.utils.data import DataLoader
 from torch.utils.data import Dataset
 
 
-"""
-
-######################################################################################
- ### CODICE PER CREARE UN DATASET CON 3 CLASSI ###
-
-f = h5py.File('3Labels.h5', 'a')
-
-# Apro il file h5py
-file = h5py.File('dataset.h5', 'r')
-# Stampo le chiavi dei primi gruppi presenti (dizionari)
-print(list(file.keys()))
-# Prendo un gruppo tramite la sua chiave
-trainSet = file['train']
-testSet = file['test']
-validSet = file['valid']
-
-# TestSet e ValidationSet di 7020 immagini, 39 etichette possibili, per ognuna abbiamo 369 dct, 10 header e 152 meta, ossia 532 features
-# TrainSet di 21060 immagini, 39 etichette possibili, per ognuna abbiamo 369 dct, 10 header e 152 meta, ossia 532 features
-
-def setInput(numOfImg, dct, header, meta):
-    row = np.concatenate((dct[0], header[0], meta[0]), axis=0)
-    row1 = np.concatenate((dct[1], header[1], meta[1]), axis=0)
-    input = np.vstack((row, row1))
-    for i in range(2, numOfImg, 1):
-        row = np.concatenate((dct[i], header[i], meta[i]), axis=0)
-        input = np.vstack((input, row))
-        if i%351 == 0:
-            print(i)
-    return input
-
-def reduceTo3Labels(labels):
-      newLabels= np.empty([0,0])
-      for i in range(0,labels.shape[0],1):
-           newLabels = np.append(newLabels,labels[i]%3)
-      newLabels = np.int_(newLabels)
-      return newLabels
-
-# preparo il trainSet
-trainFeatures = trainSet['features']
-dct = trainFeatures['dct']
-header = trainFeatures['header']
-meta = trainFeatures['meta']
-
-labels = trainSet['labels']
-
-trainSet = setInput(labels.shape[0], dct, header, meta)
-features = f.create_dataset('train/features', (21060,531), dtype='float32', data=trainSet)
-trainLabels= reduceTo3Labels(labels)
-labels = f.create_dataset('train/labels', (21060,), dtype='int64', data=trainLabels)
-
-# preparo il validSet
-validFeatures = validSet['features']
-dct = validFeatures['dct']
-header = validFeatures['header']
-meta = validFeatures['meta']
-
-labels = validSet['labels']
-
-validSet = setInput(labels.shape[0], dct, header, meta)
-features = f.create_dataset('valid/features', (7020,531), dtype='float32', data=validSet)
-validLabels= reduceTo3Labels(labels)
-labels = f.create_dataset('valid/labels', (7020,), dtype='int64', data=validLabels)
-
-# preparo il testSet
-testFeatures = testSet['features']
-dct = testFeatures['dct']
-header = testFeatures['header']
-meta = testFeatures['meta']
-
-labels = testSet['labels']
-
-testSet = setInput(labels.shape[0], dct, header, meta)
-features = f.create_dataset('test/features', (7020,531), dtype='float32', data=testSet)
-testLabels= reduceTo3Labels(labels)
-labels = f.create_dataset('test/labels', (7020,), dtype='int64', data=testLabels)
-
-
-"""
-
 ######################################################################################
 #    ESEGUO MLP CON:
-#    - DATASET NON NORMALIZZATO E 3 Labels
+#    - DATASET NORMALIZZATO E 3 Labels
 #    - 20 epoche
 #    - CrossEntropy
 #    - 117 Batch Size per training
 #    - 60 Batch Size per Validation e Test
 #    - 3 livelli nascosti, 531 [256, 128, 32] 3
-#    - optimizer Adam
+#    - optimizer SGD
 
 class CustomDataset(Dataset):
     def __init__(self, Features, Labels,  transform=None, target_transform=None):
@@ -126,36 +47,33 @@ class NetMLP(nn.Module):
         self.fl1 = nn.Linear(input_size, hidden_sizes[0])
         self.fl2 = nn.Linear(hidden_sizes[0], hidden_sizes[1])
         self.fl3 = nn.Linear(hidden_sizes[1], hidden_sizes[2])
-        self.fl6 = nn.Linear(hidden_sizes[2], output_size)
+        self.fl4 = nn.Linear(hidden_sizes[2], output_size)
 
     def forward(self, x):
         x = F.relu(self.fl1(x))
         x = F.relu(self.fl2(x))
         x = F.relu(self.fl3(x))
-        x = self.fl6(x)
+        x = self.fl4(x)
         return x
 
 classes = ('FB', 'FL', 'TW')
 
-f = h5py.File('3Labels.h5', 'r')
+f = h5py.File('3LabelsNormalized.h5', 'r')
 
-"""
-trainSet = f['train']
-Features = trainSet['features']
-Labels= trainSet['labels']
+""" 
+
+Features = f['train/features']
+Labels= f['train/labels']
 
 # trasform = none perché escono già come Tensori
 
 trainingSet = CustomDataset(Features,Labels)
 trainDataloader = DataLoader(trainingSet, batch_size=117, shuffle=True)
 
-#dataiter = iter(trainDataloader)
-#images, labels = dataiter.next()
-
 net = NetMLP(input_size, hidden_sizes, output_size)
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(net.parameters())
-#optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+#optimizer = optim.Adam(net.parameters())
+optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 
 for epoch in range(20):  # loop over the dataset multiple times
 
@@ -184,6 +102,7 @@ print('Finished Training')
 
 PATH = './last.pth'
 torch.save(net.state_dict(), PATH)
+
 """
 
 validSet = f['valid']
@@ -195,7 +114,7 @@ validDataloader = torch.utils.data.DataLoader(validationSet, batch_size=60, shuf
 
 # Salvataggio
 net = NetMLP(input_size, hidden_sizes, output_size)
-PATH = './100Adam.pth'
+PATH = './100SGD.pth'
 net.load_state_dict(torch.load(PATH))
 
 correct = 0
@@ -235,4 +154,3 @@ with torch.no_grad():
         correct += (predicted == labels).sum().item()
 
 print('Accuracy of the network on the 7020 test images: %d %%' % (100 * correct / total))
-
