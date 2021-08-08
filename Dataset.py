@@ -5,7 +5,7 @@ import numpy as np
 # TrainSet di 21060 immagini, 39 etichette possibili, per ognuna abbiamo 369 dct, 10 header e 152 meta, ossia 532 features
 
 ######################################################################################
- ### CODICE PER CREARE UN DATASET CON FEATURES NORMALIZZATE E 3 CLASSI ###
+ ### CODICE PER CREARE UN DATASET CON FEATURES NORMALIZZATE E 3 o 12 LABELS ###
 
 def setInput(numberOfData, dct, header, meta):
     row = np.concatenate((dct[0], header[0], meta[0]), axis=0)
@@ -24,6 +24,32 @@ def reduceTo3Labels(labels):
            newLabels = np.append(newLabels,labels[i]%3)
       newLabels = np.int_(newLabels)
       return newLabels
+
+def reduceTo12Labels(labels):
+    newLabels = np.empty([0,0])
+    for i in range(0,labels.shape[0],1):
+        if(labels[i] == 12 or labels[i] == 21 or labels[i] == 30):
+            newLabels = np.append(newLabels,3)
+        elif(labels[i] == 13 or labels[i] == 22 or labels[i] == 31):
+            newLabels = np.append(newLabels,4)
+        elif(labels[i] == 14 or labels[i] == 23 or labels[i] == 32):
+            newLabels = np.append(newLabels,5)
+        elif(labels[i] == 15 or labels[i] == 24 or labels[i] == 33):
+            newLabels = np.append(newLabels,6)
+        elif(labels[i] == 16 or labels[i] == 25 or labels[i] == 34):
+            newLabels = np.append(newLabels,7)
+        elif(labels[i] == 17 or labels[i] == 26 or labels[i] == 35):
+            newLabels = np.append(newLabels,8)
+        elif(labels[i] == 18 or labels[i] == 27 or labels[i] == 36):
+            newLabels = np.append(newLabels,9)
+        elif(labels[i] == 19 or labels[i] == 28 or labels[i] == 37):
+            newLabels = np.append(newLabels,10)
+        elif(labels[i] == 20 or labels[i] == 29 or labels[i] == 38):
+            newLabels = np.append(newLabels,11)
+        else:
+            newLabels = np.append(newLabels,labels[i])
+    newLabels = np.int_(newLabels)
+    return newLabels
 
 def Normalize(file, newfile):
 
@@ -116,15 +142,15 @@ trainLabels = file['train/labels']
 validLabels = file['valid/labels']
 testLabels = file['test/labels']
 
-newfile = h5py.File('3LabelsNormalized.h5', 'a')
+newfile = h5py.File('12LabelsNormalized.h5', 'a')
 
 Normalize(file, newfile)
 
-trainLabels= reduceTo3Labels(trainLabels)
+trainLabels= reduceTo12Labels(trainLabels)
 newfile.create_dataset('train/labels', (21060,), dtype='int64', data=trainLabels)
-validLabels= reduceTo3Labels(validLabels)
+validLabels= reduceTo12Labels(validLabels)
 newfile.create_dataset('valid/labels', (7020,), dtype='int64', data=validLabels)
-testLabels= reduceTo3Labels(testLabels)
+testLabels= reduceTo12Labels(testLabels)
 newfile.create_dataset('test/labels', (7020,), dtype='int64', data=testLabels)
 
 newfile.close()
