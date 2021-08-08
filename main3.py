@@ -99,10 +99,11 @@ for epoch in range(25):  # loop over the dataset multiple times
 
 print('Finished Training')
 
-PATH = './last.pth'
+PATH = './last1.pth'
 torch.save(net.state_dict(), PATH)
 
 """
+
 
 validSet = f['valid']
 Features = validSet['features']
