@@ -95,7 +95,7 @@ labels = f.create_dataset('test/labels', (7020,), dtype='int64', data=testLabels
 #    - 117 Batch Size per training
 #    - 60 Batch Size per Validation e Test
 #    - 3 livelli nascosti, 531 [256, 128, 32] 3
-#    - optimizer Adam
+#    - optimizer Adam ---> 100%
 
 class CustomDataset(Dataset):
     def __init__(self, Features, Labels,  transform=None, target_transform=None):
@@ -219,13 +219,13 @@ Features = testSet['features']
 Labels= testSet['labels']
 
 testSet = CustomDataset(Features,Labels)
-testDataloader = torch.utils.data.DataLoader(validationSet, batch_size=60, shuffle=False)
+testDataloader = torch.utils.data.DataLoader(testSet, batch_size=60, shuffle=False)
 
 correct = 0
 total = 0
 # since we're not training, we don't need to calculate the gradients for our outputs
 with torch.no_grad():
-    for data in validDataloader:
+    for data in testDataloader:
         images, labels = data
         # calculate outputs by running images through the network
         outputs = net(images)

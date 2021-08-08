@@ -11,12 +11,21 @@ from torch.utils.data import Dataset
 ######################################################################################
 #    ESEGUO MLP CON:
 #    - DATASET NORMALIZZATO E 12 Labels
-#    - 25 epoche
+#    - 60 epoche
 #    - CrossEntropy
 #    - 117 Batch Size per training
 #    - 60 Batch Size per Validation e Test
-#    - 3 livelli nascosti, 531 [256, 128, 32] 12
-#    - optimizer SGD
+#    - 3 livelli nascosti, 531 [256, 128, 64] 12
+#    - optimizer SGD con Nesterov Momentum ---> 75% con loss di 0.562
+
+#    ESEGUO MLP CON:
+#    - DATASET NORMALIZZATO E 12 Labels
+#    - 45 epoche
+#    - CrossEntropy
+#    - 117 Batch Size per training
+#    - 60 Batch Size per Validation e Test
+#    - 3 livelli nascosti, 531 [256, 128, 64] 12
+#    - optimizer Adam ---> 79% con loss di 0.392
 
 class CustomDataset(Dataset):
     def __init__(self, Features, Labels,  transform=None, target_transform=None):
@@ -38,7 +47,7 @@ class CustomDataset(Dataset):
         return image, label
 
 input_size = 531
-hidden_sizes = [256, 128, 32]
+hidden_sizes = [256, 128, 64]
 output_size = 12
 
 class NetMLP(nn.Module):
@@ -60,8 +69,6 @@ class NetMLP(nn.Module):
 
 f = h5py.File('12LabelsNormalized.h5', 'r')
 
-"""
-
 Features = f['train/features']
 Labels= f['train/labels']
 
@@ -72,9 +79,10 @@ trainDataloader = DataLoader(trainingSet, batch_size=117, shuffle=True)
 
 net = NetMLP(input_size, hidden_sizes, output_size)
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+optimizer = optim.Adam(net.parameters())
+#optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9, nesterov=True)
 
-for epoch in range(25):  # loop over the dataset multiple times
+for epoch in range(45):  # loop over the dataset multiple times
 
     running_loss = 0.0
     for i, data in enumerate(trainDataloader, 0):
@@ -99,11 +107,13 @@ for epoch in range(25):  # loop over the dataset multiple times
 
 print('Finished Training')
 
-PATH = './last1.pth'
+PATH = './last.pth'
 torch.save(net.state_dict(), PATH)
 
-"""
-
+# Salvataggio
+#net = NetMLP(input_size, hidden_sizes, output_size)
+#PATH = './last.pth'
+#net.load_state_dict(torch.load(PATH))
 
 validSet = f['valid']
 Features = validSet['features']
@@ -111,11 +121,6 @@ Labels= validSet['labels']
 
 validationSet = CustomDataset(Features,Labels)
 validDataloader = torch.utils.data.DataLoader(validationSet, batch_size=60, shuffle=False)
-
-# Salvataggio
-net = NetMLP(input_size, hidden_sizes, output_size)
-PATH = './last.pth'
-net.load_state_dict(torch.load(PATH))
 
 correct = 0
 total = 0
@@ -139,13 +144,13 @@ Features = testSet['features']
 Labels= testSet['labels']
 
 testSet = CustomDataset(Features,Labels)
-testDataloader = torch.utils.data.DataLoader(validationSet, batch_size=60, shuffle=False)
+testDataloader = torch.utils.data.DataLoader(testSet, batch_size=60, shuffle=False)
 
 correct = 0
 total = 0
 # since we're not training, we don't need to calculate the gradients for our outputs
 with torch.no_grad():
-    for data in validDataloader:
+    for data in testDataloader:
         images, labels = data
         # calculate outputs by running images through the network
         outputs = net(images)
