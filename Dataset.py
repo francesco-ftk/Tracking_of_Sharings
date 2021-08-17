@@ -280,4 +280,9 @@ x = torch.cat((x, h), 0)
 print(x.shape)
 print(x)
 
+k = torch.ones([3,3])
+y = torch.zeros([3,7])
+m = torch.cat((k,y),1)
+print(m.shape)
+print(m)
 

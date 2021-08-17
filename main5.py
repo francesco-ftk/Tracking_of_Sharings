@@ -7,6 +7,41 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from torch.utils.data import Dataset
 
+
+######################################################################################
+#    ESEGUO METODO UNROLLED:
+#    - DATASET NORMALIZZATO E 4 Labels
+#    - 35 epoche
+#    - CrossEntropy
+#    - 117 Batch Size per training
+#    - 60 Batch Size per Validation e Test
+#    - 3 livelli nascosti, 531 [256, 128, 16] 4
+#    - Adam ---> 79%
+#    79UnrolledAdam.pth
+
+#    ESEGUO METODO UNROLLED:
+#    - DATASET NORMALIZZATO E 4 Labels
+#    - 50 epoche
+#    - CrossEntropy
+#    - 117 Batch Size per training
+#    - 60 Batch Size per Validation e Test
+#    - 3 livelli nascosti, 531 [256, 128, 32] 4
+#    - Adam ---> 78%, 80.75% sul test
+#    78e80Adam.pth
+
+#    ESEGUO METODO UNROLLED:
+#    - DATASET NORMALIZZATO E 4 Labels
+#    - 45 epoche
+#    - CrossEntropy
+#    - 117 Batch Size per training
+#    - 60 Batch Size per Validation e Test
+#    - 3 livelli nascosti, 531 [256, 128, 16] 4
+#    - optimizer SGD con Nesterov Momentum ---> 75%
+#    NesterovUnrolled75.pth
+
+batch_size_train = 117
+batch_size_valid_and_test = 60
+
 class CustomDataset(Dataset):
     def __init__(self, Features, Labels1, Labels2,  transform=None, target_transform=None):
         self.labels1 = Labels1
@@ -43,8 +78,8 @@ class NetMLPLatent(nn.Module):
         self.fl4 = nn.Linear(hidden_sizes[2], output_size)
 
     def forward(self, x, h):
-        x = torch.cat(x, h, 0)   # Concatenates the h tensor to input x.
-        x = F.relu(self.fl1(x))  # Note above how the size of fl1 had to be changed.
+        x = torch.cat((x, h), 1)   # Concatenates the h tensor to input x.
+        x = F.relu(self.fl1(x))
         x = F.relu(self.fl2(x))
         latent = F.relu(self.fl3(x))
         x = self.fl4(latent)
@@ -56,8 +91,8 @@ class NetMLPUnrolled(nn.Module):
         self.share1 = NetMLPLatent(input_size, hidden_sizes, output_size)
         self.share2 = NetMLPLatent(input_size, hidden_sizes, output_size)
 
-    def forward(self, x):
-        share1, latent = self.share1(x, torch.zeros([self.latent_size]))
+    def forward(self, x, batch_size):
+        share1, latent = self.share1(x, torch.zeros([batch_size, self.share1.latent_size]))
         share2, _ = self.share2(x, latent)
         return share1, share2
 
@@ -71,14 +106,14 @@ Labels2 = f1['train/labels/share2']
 # trasform = none perché escono già come Tensori
 
 trainingSet = CustomDataset(Features, Labels1, Labels2)
-trainDataloader = DataLoader(trainingSet, batch_size=117, shuffle=True)
+trainDataloader = DataLoader(trainingSet, batch_size=batch_size_train, shuffle=True)
 
 net = NetMLPUnrolled(input_size, hidden_sizes, output_size)
 criterion = nn.CrossEntropyLoss()
-#optimizer = optim.Adam(net.parameters())
-optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9, nesterov=True)
+optimizer = optim.Adam(net.parameters())
+#optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9, nesterov=True)
 
-for epoch in range(45):  # loop over the dataset multiple times
+for epoch in range(70):  # loop over the dataset multiple times
 
     running_loss = 0.0
     for i, data in enumerate(trainDataloader, 0):
@@ -89,7 +124,7 @@ for epoch in range(45):  # loop over the dataset multiple times
         optimizer.zero_grad()
 
         # forward + backward + optimize
-        output1, output2 = net(inputs)
+        output1, output2 = net(inputs, batch_size_train)
         loss1 = criterion(output1, labels1)
         loss2 = criterion(output2, labels2)
         loss = loss1 + loss2
@@ -111,16 +146,18 @@ torch.save(net.state_dict(), PATH)
 """
 
 # Salvataggio
-net = NetMLP(input_size, hidden_sizes, output_size1, output_size2)
-PATH = './Adam2HideDoubleSum78.pth'
+net = NetMLPUnrolled(input_size, hidden_sizes, output_size)
+PATH = './last.pth'
 net.load_state_dict(torch.load(PATH))
+
+"""
 
 Features = f['valid/features']
 Labels1 = f1['valid/labels/share1']
 Labels2 = f1['valid/labels/share2']
 
 validationSet = CustomDataset(Features, Labels1, Labels2)
-validDataloader = torch.utils.data.DataLoader(validationSet, batch_size=60, shuffle=False)
+validDataloader = torch.utils.data.DataLoader(validationSet, batch_size=batch_size_valid_and_test, shuffle=False)
 
 correct = 0
 total = 0
@@ -130,7 +167,7 @@ with torch.no_grad():
     for data in validDataloader:
         images, labels1, labels2 = data
         # calculate outputs by running images through the network
-        output1, output2 = net(images)
+        output1, output2 = net(images,batch_size_valid_and_test)
         # the class with the highest energy is what we choose as prediction
         _, predicted1 = torch.max(output1.data, 1)
         _, predicted2 = torch.max(output2.data, 1)
@@ -140,6 +177,8 @@ with torch.no_grad():
                 correct += 1
 
 print('Accuracy of the network on the 7020 validation images: %d %%' % (100 * correct / total))
+
+"""
 
 Features = f['test/features']
 Labels1 = f1['test/labels/share1']
@@ -155,7 +194,7 @@ with torch.no_grad():
     for data in testDataloader:
         images, labels1, labels2 = data
         # calculate outputs by running images through the network
-        output1, output2 = net(images)
+        output1, output2 = net(images,batch_size_valid_and_test)
         # the class with the highest energy is what we choose as prediction
         _, predicted1 = torch.max(output1.data, 1)
         _, predicted2 = torch.max(output2.data, 1)
@@ -164,8 +203,40 @@ with torch.no_grad():
             if predicted1[i] == labels1[i] and predicted2[i] == labels2[i]:
                 correct += 1
 
-print('Accuracy of the network on the 7020 test images: %d %%' % (100 * correct / total))
+print('Accuracy of the network on the 7020 test images: %f %%' % (100 * correct / total))
 
+"""
+
+"""
+
+class NetJoin(nn.Module):
+    def __init__(self, input_size, hidden_sizes, output_size):
+        super().__init__()
+        self.latent_size = hidden_sizes[2]
+        self.fl1 = nn.Linear(input_size + self.latent_size, hidden_sizes[0])
+        self.fl2 = nn.Linear(hidden_sizes[0], hidden_sizes[1])
+        self.fl3 = nn.Linear(hidden_sizes[1], hidden_sizes[2])
+        #self.fl4 = nn.Linear(hidden_sizes[2], output_size)
+
+         # Classifier for last share.
+        self.share1 = nn.Linear(hidden_sizes[2], output_size)
+        # Classifier for penultimate share.
+        self.share2 = nn.Linear(hidden_sizes[2], output_size+1)
+
+    def forward(self, x, batch_size):
+        h = torch.zeros([batch_size,self.latent_size])
+        share1 = torch.cat((x, h), 1)   # Concatenates the h tensor to input x.
+        share1 = F.relu(self.fl1(share1))
+        share1 = F.relu(self.fl2(share1))
+        latent = F.relu(self.fl3(share1))
+        share1 = self.share1(latent)
+
+        share2 = torch.cat((x, latent), 1)   # Concatenates the h tensor to input x.
+        share2 = F.relu(self.fl1(share2))
+        share2 = F.relu(self.fl2(share2))
+        share2 = F.relu(self.fl3(share2))
+        share2 = self.share2(share2)
+        return share1, share2   
 """
 
 
