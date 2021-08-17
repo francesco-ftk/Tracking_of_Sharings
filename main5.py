@@ -20,14 +20,14 @@ from torch.utils.data import Dataset
 #    79UnrolledAdam.pth
 
 #    ESEGUO METODO UNROLLED:
-#    - DATASET NORMALIZZATO E 4 Labels
-#    - 50 epoche
+#    - DATASET NORMALIZZATO E 3 Labels per la prima condivisione e  4 per la seconda Labels
+#    - 80 epoche
 #    - CrossEntropy
 #    - 117 Batch Size per training
 #    - 60 Batch Size per Validation e Test
-#    - 3 livelli nascosti, 531 [256, 128, 32] 4
-#    - Adam ---> 78%, 80.75% sul test
-#    78e80Adam.pth
+#    - 3 livelli nascosti, 531 [256, 128, 32] 3/4
+#    - Adam ---> 79.74% sul valid, 81.14% sul test
+#    79e81UnrolledAdam.pth
 
 #    ESEGUO METODO UNROLLED:
 #    - DATASET NORMALIZZATO E 4 Labels
@@ -66,7 +66,7 @@ class CustomDataset(Dataset):
 
 input_size = 531
 hidden_sizes = [256, 128, 32]
-output_size = 4
+output_size = 3
 
 class NetMLPLatent(nn.Module):
     def __init__(self, input_size, hidden_sizes, output_size):
@@ -89,7 +89,7 @@ class NetMLPUnrolled(nn.Module):
     def __init__(self, input_size, hidden_sizes, output_size):
         super().__init__()
         self.share1 = NetMLPLatent(input_size, hidden_sizes, output_size)
-        self.share2 = NetMLPLatent(input_size, hidden_sizes, output_size)
+        self.share2 = NetMLPLatent(input_size, hidden_sizes, output_size+1)
 
     def forward(self, x, batch_size):
         share1, latent = self.share1(x, torch.zeros([batch_size, self.share1.latent_size]))
@@ -98,6 +98,8 @@ class NetMLPUnrolled(nn.Module):
 
 f = h5py.File('12LabelsNormalized.h5', 'r')
 f1 = h5py.File('doubleLabels.h5', 'r')
+
+"""
 
 Features = f['train/features']
 Labels1 = f1['train/labels/share1']
@@ -113,7 +115,7 @@ criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(net.parameters())
 #optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9, nesterov=True)
 
-for epoch in range(70):  # loop over the dataset multiple times
+for epoch in range(80):  # loop over the dataset multiple times
 
     running_loss = 0.0
     for i, data in enumerate(trainDataloader, 0):
@@ -133,9 +135,9 @@ for epoch in range(70):  # loop over the dataset multiple times
 
         # print statistics
         running_loss += loss.item()
-        if i % 18 == 17 :
+        if i % 39 == 38 :
             print('[%d, %5d] loss: %.3f' %
-                  (epoch + 1, i + 1, running_loss / 18))
+                  (epoch + 1, i + 1, running_loss / 39))
             running_loss = 0.0
 
 print('Finished Training')
@@ -147,10 +149,10 @@ torch.save(net.state_dict(), PATH)
 
 # Salvataggio
 net = NetMLPUnrolled(input_size, hidden_sizes, output_size)
-PATH = './last.pth'
+PATH = './79e81UnrolledAdam.pth'
 net.load_state_dict(torch.load(PATH))
 
-"""
+
 
 Features = f['valid/features']
 Labels1 = f1['valid/labels/share1']
@@ -176,9 +178,9 @@ with torch.no_grad():
             if predicted1[i] == labels1[i] and predicted2[i] == labels2[i]:
                 correct += 1
 
-print('Accuracy of the network on the 7020 validation images: %d %%' % (100 * correct / total))
+print('Accuracy of the network on the 7020 validation images: %.2f %%' % (100 * correct / total))
 
-"""
+
 
 Features = f['test/features']
 Labels1 = f1['test/labels/share1']
@@ -203,9 +205,8 @@ with torch.no_grad():
             if predicted1[i] == labels1[i] and predicted2[i] == labels2[i]:
                 correct += 1
 
-print('Accuracy of the network on the 7020 test images: %f %%' % (100 * correct / total))
+print('Accuracy of the network on the 7020 test images: %.2f %%' % (100 * correct / total))
 
-"""
 
 """
 
