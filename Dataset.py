@@ -133,6 +133,8 @@ def Normalize(file, newfile):
     testSet = setInput(7020, newDCTtest, newHEADERtest, newMETAtest)
     newfile.create_dataset('test/features', (7020,531), dtype='float32', data=testSet)
 
+"""
+
 # Apro il file h5py
 file = h5py.File('dataset.h5', 'r')
 # Stampo le chiavi dei primi gruppi presenti (dizionari)
@@ -155,4 +157,109 @@ newfile.create_dataset('test/labels', (7020,), dtype='int64', data=testLabels)
 
 newfile.close()
 file.close()
+
+"""
+
+######################################################################################
+ ### CODICE PER CREARE DUE LABELS: UNA SU 3 CLASSI
+ ### PER LA PRIMA CONDIVISIONE (3 social) E L'ALTRA SU 4 CLASSI PER LA
+ ### SECONDA (3 social + none) ###
+
+"""
+def toDoubleLabels1(labels):
+    newLabels = np.empty((0,2))
+    for i in range(0,labels.shape[0],1):
+        if(labels[i] == 0):
+            newLabels = np.vstack((newLabels, np.array([[0,4]])))
+        elif(labels[i] == 1):
+            newLabels = np.vstack((newLabels, np.array([[1,4]])))
+        elif(labels[i] == 2):
+            newLabels = np.vstack((newLabels, np.array([[2,4]])))
+        elif(labels[i] == 3):
+            newLabels = np.vstack((newLabels, np.array([[0,0]])))
+        elif(labels[i] == 4):
+            newLabels = np.vstack((newLabels, np.array([[1,0]])))
+        elif(labels[i] == 5):
+            newLabels = np.vstack((newLabels, np.array([[2,0]])))
+        elif(labels[i] == 6):
+            newLabels = np.vstack((newLabels,np.array([[0,1]])))
+        elif(labels[i] == 7):
+            newLabels = np.vstack((newLabels,np.array([[1,1]])))
+        elif(labels[i] == 8):
+            newLabels = np.vstack((newLabels, np.array([[2,1]])))
+        elif(labels[i] == 9):
+            newLabels = np.vstack((newLabels, np.array([[0,2]])))
+        elif(labels[i] == 10):
+            newLabels = np.vstack((newLabels, np.array([[1,2]])))
+        else:
+            newLabels = np.vstack((newLabels, np.array([[2,2]])))
+    newLabels = np.int_(newLabels)
+    return newLabels
+"""
+
+def toDoubleLabels(labels):
+    newLabels = np.empty([0,0])
+    newLabels1 = np.empty([0,0])
+    for i in range(0,labels.shape[0],1):
+        if(labels[i] == 0):
+            newLabels = np.append(newLabels, 0)
+            newLabels1 = np.append(newLabels1, 3)
+        elif(labels[i] == 1):
+             newLabels = np.append(newLabels, 1)
+             newLabels1 = np.append(newLabels1, 3)
+        elif(labels[i] == 2):
+             newLabels = np.append(newLabels, 2)
+             newLabels1 = np.append(newLabels1, 3)
+        elif(labels[i] == 3):
+             newLabels = np.append(newLabels, 0)
+             newLabels1 = np.append(newLabels1, 0)
+        elif(labels[i] == 4):
+             newLabels = np.append(newLabels, 1)
+             newLabels1 = np.append(newLabels1, 0)
+        elif(labels[i] == 5):
+             newLabels = np.append(newLabels, 2)
+             newLabels1 = np.append(newLabels1, 0)
+        elif(labels[i] == 6):
+             newLabels = np.append(newLabels, 0)
+             newLabels1 = np.append(newLabels1, 1)
+        elif(labels[i] == 7):
+             newLabels = np.append(newLabels, 1)
+             newLabels1 = np.append(newLabels1, 1)
+        elif(labels[i] == 8):
+             newLabels = np.append(newLabels, 2)
+             newLabels1 = np.append(newLabels1, 1)
+        elif(labels[i] == 9):
+             newLabels = np.append(newLabels, 0)
+             newLabels1 = np.append(newLabels1, 2)
+        elif(labels[i] == 10):
+             newLabels = np.append(newLabels, 1)
+             newLabels1 = np.append(newLabels1, 2)
+        else:
+             newLabels = np.append(newLabels, 2)
+             newLabels1 = np.append(newLabels1, 2)
+    newLabels = np.int_(newLabels)
+    newLabels1 = np.int_(newLabels1)
+    return newLabels, newLabels1
+
+
+file = h5py.File('12LabelsNormalized.h5', 'r')
+trainLabels = file['train/labels']
+validLabels = file['valid/labels']
+testLabels = file['test/labels']
+
+newfile = h5py.File('doubleLabels.h5', 'a')
+
+trainLabels, trainLabels1= toDoubleLabels(trainLabels)
+newfile.create_dataset('train/labels/share1', (21060,), dtype='int64', data=trainLabels)
+newfile.create_dataset('train/labels/share2', (21060,), dtype='int64', data=trainLabels1)
+validLabels, validLabels1= toDoubleLabels(validLabels)
+newfile.create_dataset('valid/labels/share1', (7020,), dtype='int64', data=validLabels)
+newfile.create_dataset('valid/labels/share2', (7020,), dtype='int64', data=validLabels1)
+testLabels, testLabels1= toDoubleLabels(testLabels)
+newfile.create_dataset('test/labels/share1', (7020,), dtype='int64', data=testLabels)
+newfile.create_dataset('test/labels/share2', (7020,), dtype='int64', data=testLabels1)
+
+newfile.close()
+file.close()
+
 

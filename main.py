@@ -96,6 +96,7 @@ labels = f.create_dataset('test/labels', (7020,), dtype='int64', data=testLabels
 #    - 60 Batch Size per Validation e Test
 #    - 3 livelli nascosti, 531 [256, 128, 32] 3
 #    - optimizer Adam ---> 100%
+#    100Adam.pth
 
 class CustomDataset(Dataset):
     def __init__(self, Features, Labels,  transform=None, target_transform=None):
@@ -155,7 +156,6 @@ trainDataloader = DataLoader(trainingSet, batch_size=117, shuffle=True)
 net = NetMLP(input_size, hidden_sizes, output_size)
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(net.parameters())
-#optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 
 for epoch in range(20):  # loop over the dataset multiple times
 
@@ -175,7 +175,7 @@ for epoch in range(20):  # loop over the dataset multiple times
 
         # print statistics
         running_loss += loss.item()
-        if i % 18 == 17:    # print every 39 mini-batches
+        if i % 18 == 17:
             print('[%d, %5d] loss: %.3f' %
                   (epoch + 1, i + 1, running_loss / 18))
             running_loss = 0.0
