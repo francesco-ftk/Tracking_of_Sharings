@@ -99,8 +99,6 @@ class NetMLPUnrolled(nn.Module):
 f = h5py.File('12LabelsNormalized.h5', 'r')
 f1 = h5py.File('doubleLabels.h5', 'r')
 
-"""
-
 Features = f['train/features']
 Labels1 = f1['train/labels/share1']
 Labels2 = f1['train/labels/share2']
@@ -115,7 +113,7 @@ criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(net.parameters())
 #optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9, nesterov=True)
 
-for epoch in range(90):  # loop over the dataset multiple times
+for epoch in range(80):  # loop over the dataset multiple times
 
     running_loss = 0.0
     for i, data in enumerate(trainDataloader, 0):
@@ -152,6 +150,7 @@ net = NetMLPUnrolled(input_size, hidden_sizes, output_size)
 PATH = './79e81UnrolledAdam.pth'
 net.load_state_dict(torch.load(PATH))
 
+"""
 
 Features = f['valid/features']
 Labels1 = f1['valid/labels/share1']
@@ -179,6 +178,7 @@ with torch.no_grad():
 
 print('Accuracy of the network on the 7020 validation images: %.2f %%' % (100 * correct / total))
 
+"""
 
 Features = f['test/features']
 Labels1 = f1['test/labels/share1']
@@ -205,7 +205,7 @@ with torch.no_grad():
 
 print('Accuracy of the network on the 7020 test images: %.2f %%' % (100 * correct / total))
 
-
+"""
 
 """
 
