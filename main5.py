@@ -115,7 +115,7 @@ criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(net.parameters())
 #optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9, nesterov=True)
 
-for epoch in range(80):  # loop over the dataset multiple times
+for epoch in range(90):  # loop over the dataset multiple times
 
     running_loss = 0.0
     for i, data in enumerate(trainDataloader, 0):
@@ -135,9 +135,9 @@ for epoch in range(80):  # loop over the dataset multiple times
 
         # print statistics
         running_loss += loss.item()
-        if i % 39 == 38 :
+        if i % 18 == 17 :
             print('[%d, %5d] loss: %.3f' %
-                  (epoch + 1, i + 1, running_loss / 39))
+                  (epoch + 1, i + 1, running_loss / 18))
             running_loss = 0.0
 
 print('Finished Training')
@@ -151,7 +151,6 @@ torch.save(net.state_dict(), PATH)
 net = NetMLPUnrolled(input_size, hidden_sizes, output_size)
 PATH = './79e81UnrolledAdam.pth'
 net.load_state_dict(torch.load(PATH))
-
 
 
 Features = f['valid/features']
@@ -181,7 +180,6 @@ with torch.no_grad():
 print('Accuracy of the network on the 7020 validation images: %.2f %%' % (100 * correct / total))
 
 
-
 Features = f['test/features']
 Labels1 = f1['test/labels/share1']
 Labels2 = f1['test/labels/share2']
@@ -206,6 +204,7 @@ with torch.no_grad():
                 correct += 1
 
 print('Accuracy of the network on the 7020 test images: %.2f %%' % (100 * correct / total))
+
 
 
 """
