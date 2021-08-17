@@ -7,43 +7,11 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from torch.utils.data import Dataset
 
-
-######################################################################################
-#    ESEGUO METODO MLP CON DOPPIO OUTPUT CONTEMPORANEO E LOSS SOMMATA CON:
-#    - DATASET NORMALIZZATO E 3 Labels per la prima share e 4 Labels per la seconda
-#    - 60 epoche
-#    - CrossEntropy
-#    - 117 Batch Size per training
-#    - 60 Batch Size per Validation e Test
-#    - 3 livelli nascosti, 531 [256, 128, 32] 3/4
-#    - optimizer SGD con Nesterov Momentum ---> 75% , 77% nel test
-#    NesterovDoubleSum75.pth
-
-#    ESEGUO METODO MLP CON DOPPIO OUTPUT CONTEMPORANEO E LOSS SOMMATA CON:
-#    - DATASET NORMALIZZATO E 3 Labels per la prima share e 4 Labels per la seconda
-#    - 45 epoche
-#    - CrossEntropy
-#    - 117 Batch Size per training
-#    - 60 Batch Size per Validation e Test
-#    - 3 livelli nascosti, 531 [256, 128, 32] 3/4
-#    - optimizer Adam ---> 77%, 78% nel test
-#    AdamDoubleSum77.pth
-
-#    ESEGUO METODO MLP CON DOPPIO OUTPUT CONTEMPORANEO E LOSS SOMMATA CON:
-#    - DATASET NORMALIZZATO E 3 Labels per la prima share e 4 Labels per la seconda
-#    - 25 epoche
-#    - CrossEntropy
-#    - 117 Batch Size per training
-#    - 60 Batch Size per Validation e Test
-#    - 2 livelli nascosti, 531 [128, 32] 3/4
-#    - optimizer Adam ---> 78%, 79% nel test
-#    Adam2HideDoubleSum78.pth
-
 class CustomDataset(Dataset):
-    def __init__(self, Features, Labels1, Labels2, transform=None, target_transform=None):
+    def __init__(self, Features, Labels1, Labels2,  transform=None, target_transform=None):
         self.labels1 = Labels1
         self.labels2 = Labels2
-        self.features = Features
+        self.features= Features
         self.transform = transform
         self.target_transform = target_transform
 
@@ -61,42 +29,40 @@ class CustomDataset(Dataset):
             labels2 = self.target_transform(labels2)
         return image, labels1, labels2
 
-
 input_size = 531
-hidden_sizes = [128, 32]
-# [256, 128, 32]
-output_size1 = 3
-output_size2 = 4
+hidden_sizes = [256, 128, 32]
+output_size = 4
 
-
-class NetMLP(nn.Module):
-    def __init__(self, input_size, hidden_sizes, output_size1, output_size2):
+class NetMLPLatent(nn.Module):
+    def __init__(self, input_size, hidden_sizes, output_size):
         super().__init__()
-        self.fl1 = nn.Linear(input_size, hidden_sizes[0])
+        self.latent_size = hidden_sizes[2]
+        self.fl1 = nn.Linear(input_size + self.latent_size, hidden_sizes[0])
         self.fl2 = nn.Linear(hidden_sizes[0], hidden_sizes[1])
-        # self.fl3 = nn.Linear(hidden_sizes[1], hidden_sizes[2])
+        self.fl3 = nn.Linear(hidden_sizes[1], hidden_sizes[2])
+        self.fl4 = nn.Linear(hidden_sizes[2], output_size)
 
-        # Classifier for last share.
-        self.share1 = nn.Linear(hidden_sizes[1], output_size1)
-        # Classifier for penultimate share.
-        self.share2 = nn.Linear(hidden_sizes[1], output_size2)
+    def forward(self, x, h):
+        x = torch.cat(x, h, 0)   # Concatenates the h tensor to input x.
+        x = F.relu(self.fl1(x))  # Note above how the size of fl1 had to be changed.
+        x = F.relu(self.fl2(x))
+        latent = F.relu(self.fl3(x))
+        x = self.fl4(latent)
+        return x, latent
+
+class NetMLPUnrolled(nn.Module):
+    def __init__(self, input_size, hidden_sizes, output_size):
+        super().__init__()
+        self.share1 = NetMLPLatent(input_size, hidden_sizes, output_size)
+        self.share2 = NetMLPLatent(input_size, hidden_sizes, output_size)
 
     def forward(self, x):
-        x = F.relu(self.fl1(x))
-        x = F.relu(self.fl2(x))
-        # x = F.relu(self.fl3(x))
-        # Compute outputs.
-        share1 = self.share1(x)
-        share2 = self.share2(x)
+        share1, latent = self.share1(x, torch.zeros([self.latent_size]))
+        share2, _ = self.share2(x, latent)
         return share1, share2
-
-
-# classes = ('FB', 'FL', 'TW', 'none')
 
 f = h5py.File('12LabelsNormalized.h5', 'r')
 f1 = h5py.File('doubleLabels.h5', 'r')
-
-"""
 
 Features = f['train/features']
 Labels1 = f1['train/labels/share1']
@@ -107,12 +73,12 @@ Labels2 = f1['train/labels/share2']
 trainingSet = CustomDataset(Features, Labels1, Labels2)
 trainDataloader = DataLoader(trainingSet, batch_size=117, shuffle=True)
 
-net = NetMLP(input_size, hidden_sizes, output_size1, output_size2)
+net = NetMLPUnrolled(input_size, hidden_sizes, output_size)
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(net.parameters())
-#optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9, nesterov=True)
+#optimizer = optim.Adam(net.parameters())
+optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9, nesterov=True)
 
-for epoch in range(25):  # loop over the dataset multiple times
+for epoch in range(45):  # loop over the dataset multiple times
 
     running_loss = 0.0
     for i, data in enumerate(trainDataloader, 0):
@@ -202,22 +168,4 @@ print('Accuracy of the network on the 7020 test images: %d %%' % (100 * correct 
 
 """
 
-dataiter = iter(trainDataloader)
-images, labels = dataiter.next()
-print(labels.shape)
-print(labels)
-print(labels[0])
-print(labels[0,0])
-print(labels[0,1])
-print(labels[1,0])
-print(labels[1,1])
 
-dataiter = iter(trainDataloader)
-images, labels1, labels2 = dataiter.next()
-print(labels1.shape)
-print(labels1)
-print(labels2.shape)
-print(labels2)
-print(images.shape)
-
-"""

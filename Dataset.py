@@ -241,6 +241,7 @@ def toDoubleLabels(labels):
     newLabels1 = np.int_(newLabels1)
     return newLabels, newLabels1
 
+"""
 
 file = h5py.File('12LabelsNormalized.h5', 'r')
 trainLabels = file['train/labels']
@@ -261,5 +262,22 @@ newfile.create_dataset('test/labels/share2', (7020,), dtype='int64', data=testLa
 
 newfile.close()
 file.close()
+
+"""
+
+ff = h5py.File('12LabelsNormalized.h5', 'r')
+trainLabels = ff['train/features']
+x= trainLabels[0]
+
+import torch
+x= torch.from_numpy(x)
+print(x.shape)
+h= torch.zeros([32])
+print(h.shape)
+print(h)
+
+x = torch.cat((x, h), 0)
+print(x.shape)
+print(x)
 
 
