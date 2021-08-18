@@ -99,6 +99,8 @@ class NetMLPUnrolled(nn.Module):
 f = h5py.File('12LabelsNormalized.h5', 'r')
 f1 = h5py.File('doubleLabels.h5', 'r')
 
+"""
+
 Features = f['train/features']
 Labels1 = f1['train/labels/share1']
 Labels2 = f1['train/labels/share2']
@@ -150,8 +152,6 @@ net = NetMLPUnrolled(input_size, hidden_sizes, output_size)
 PATH = './79e81UnrolledAdam.pth'
 net.load_state_dict(torch.load(PATH))
 
-"""
-
 Features = f['valid/features']
 Labels1 = f1['valid/labels/share1']
 Labels2 = f1['valid/labels/share2']
@@ -159,6 +159,8 @@ Labels2 = f1['valid/labels/share2']
 validationSet = CustomDataset(Features, Labels1, Labels2)
 validDataloader = torch.utils.data.DataLoader(validationSet, batch_size=batch_size_valid_and_test, shuffle=False)
 
+first_share = 0
+second_share = 0
 correct = 0
 total = 0
 a = 0
@@ -173,12 +175,18 @@ with torch.no_grad():
         _, predicted2 = torch.max(output2.data, 1)
         total += labels1.size(0)
         for i in range(len(predicted1)):
-            if predicted1[i] == labels1[i] and predicted2[i] == labels2[i]:
-                correct += 1
+            if predicted1[i] == labels1[i]:
+                first_share +=1
+                if predicted2[i] == labels2[i]:
+                    second_share +=1
+                    correct +=1
+            elif predicted2[i] == labels2[i]:
+                    second_share +=1
 
 print('Accuracy of the network on the 7020 validation images: %.2f %%' % (100 * correct / total))
+print('Accuracy of the network on the last share: %.2f %%' % (100 * first_share/ total))
+print('Accuracy of the network on the second-last share: %.2f %%' % (100 * second_share/ total))
 
-"""
 
 Features = f['test/features']
 Labels1 = f1['test/labels/share1']
@@ -187,6 +195,8 @@ Labels2 = f1['test/labels/share2']
 testSet = CustomDataset(Features, Labels1, Labels2)
 testDataloader = torch.utils.data.DataLoader(testSet, batch_size=60, shuffle=False)
 
+first_share = 0
+second_share = 0
 correct = 0
 total = 0
 # since we're not training, we don't need to calculate the gradients for our outputs
@@ -200,12 +210,18 @@ with torch.no_grad():
         _, predicted2 = torch.max(output2.data, 1)
         total += labels1.size(0)
         for i in range(len(predicted1)):
-            if predicted1[i] == labels1[i] and predicted2[i] == labels2[i]:
-                correct += 1
+            if predicted1[i] == labels1[i]:
+                first_share +=1
+                if predicted2[i] == labels2[i]:
+                    second_share +=1
+                    correct +=1
+            elif predicted2[i] == labels2[i]:
+                    second_share +=1
 
 print('Accuracy of the network on the 7020 test images: %.2f %%' % (100 * correct / total))
+print('Accuracy of the network on the last share: %.2f %%' % (100 * first_share/ total))
+print('Accuracy of the network on the second-last share: %.2f %%' % (100 * second_share/ total))
 
-"""
 
 """
 
