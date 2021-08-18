@@ -218,14 +218,47 @@ with torch.no_grad():
             elif predicted2[i] == labels2[i]:
                     second_share +=1
 
+print("\n")
 print('Accuracy of the network on the 7020 test images: %.2f %%' % (100 * correct / total))
 print('Accuracy of the network on the last share: %.2f %%' % (100 * first_share/ total))
 print('Accuracy of the network on the second-last share: %.2f %%' % (100 * second_share/ total))
 
+# STAMPO ACCURATEZZA PER OGNI CLASSE SUL TESTSET
+
+classes = ('FB', 'FL', 'TW', 'NONE')
+
+# prepare to count predictions for each class
+correct_pred = {classname: 0 for classname in classes}
+total_pred = {classname: 0 for classname in classes}
+
+# again no gradients needed
+with torch.no_grad():
+    for data in testDataloader:
+        images, labels1, labels2 = data
+        output1, output2 = net(images,batch_size_valid_and_test)
+        _, predicted1 = torch.max(output1.data, 1)
+        _, predicted2 = torch.max(output2.data, 1)
+        # collect the correct predictions for each class
+        for label, prediction in zip(labels1, predicted1):
+            if label == prediction:
+                correct_pred[classes[label]] += 1
+            total_pred[classes[label]] += 1
+        for label, prediction in zip(labels2, predicted2):
+            if label == prediction:
+                correct_pred[classes[label]] += 1
+            total_pred[classes[label]] += 1
+
+# print accuracy for each class
+print("\n")
+for classname, correct_count in correct_pred.items():
+    accuracy = 100 * float(correct_count) / total_pred[classname]
+    print("Accuracy for class {:2s} is: {:.1f} %".format(classname,
+                                                   accuracy))
+
 
 """
 
-class NetJoin(nn.Module):
+class NetUnified(nn.Module):
     def __init__(self, input_size, hidden_sizes, output_size):
         super().__init__()
         self.latent_size = hidden_sizes[2]
