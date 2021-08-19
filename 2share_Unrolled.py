@@ -154,7 +154,7 @@ torch.save(net.state_dict(), PATH)
 
 # Salvataggio
 net = NetMLPUnrolled(input_size, hidden_sizes, output_size)
-PATH = './last.pth'
+PATH = './81.34_Unrolled.pth'
 net.load_state_dict(torch.load(PATH))
 
 Features = f['valid/features']

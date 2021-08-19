@@ -8,6 +8,25 @@ from torch.utils.data import DataLoader
 from torch.utils.data import Dataset
 from torch.utils.tensorboard import SummaryWriter
 
+######################################################################################
+### ESEGUO METODO IN "2share_Unrolled.py" PER FARE PLOT DI ACCURACY E LOSS
+### SUL TRAINSET E VALIDSET PER 150 EPOCHE DI ADDESTRAMENTO.
+### DAL PLOT RISULTA CHE L'OVERFIT INIZA FRA LA 20-ESIMA E 40-ESIMA EPOCA
+### DI ADDESTRAMENTO. L'ACCURATEZZA DEL VALIDSET AUMENTA FINO A STABILIZZARSI
+### VERSO LA 75-EPOCA.
+
+### RETE CON LA MIGLIORE ACCURATEZZA SUL VALIDSET:
+#    ESEGUO METODO UNROLLED:
+#    - DATASET NORMALIZZATO E 3 Labels per la prima condivisione e  4 per la seconda Labels
+#    - 132 epoche
+#    - CrossEntropy
+#    - 117 Batch Size per training
+#    - 60 Batch Size per Validation e Test
+#    - 3 livelli nascosti, 531 [256, 128, 32] 3/4
+#    - Adam ---> 80.75% sul valid, 81.34% sul test
+#    81.34_Unrolled.pth
+
+
 batch_size_train = 117
 batch_size_valid_and_test = 60
 
@@ -100,7 +119,7 @@ optimizer = optim.Adam(net.parameters())
 writer = SummaryWriter("runs1")
 max = 0
 
-for epoch in range(150):  # loop over the dataset multiple times
+for epoch in range(200):  # loop over the dataset multiple times
 
     print('Running Epoch: ', epoch)
 
@@ -181,14 +200,4 @@ writer.close()
 print("Max Accuracy in validtest: ", max)
 print('Finished')
 
-"""
-from torch.utils.tensorboard import SummaryWriter
-writer = SummaryWriter()
-x = range(100)
-for i in x:
-    writer.add_scalar('y=2x', i * 2, i)
-writer.close()
-
 # DA TERMINALE IN BASSO -> tensorboard --logdir=runs
-
-"""
