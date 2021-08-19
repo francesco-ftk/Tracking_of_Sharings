@@ -97,7 +97,8 @@ criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(net.parameters())
 
 # Writer will output to ./runs/ directory by default
-writer = SummaryWriter("Accuracy_Loss_2_Share")
+writer = SummaryWriter("runs1")
+max = 0
 
 for epoch in range(150):  # loop over the dataset multiple times
 
@@ -165,12 +166,19 @@ for epoch in range(150):  # loop over the dataset multiple times
                     correct += 1
 
     Accuracy_Valid = 100 * correct / total
+
+    if Accuracy_Valid > max:
+        max = Accuracy_Valid
+        PATH = './last.pth'
+        torch.save(net.state_dict(), PATH)
+
     running_loss_valid = running_loss_valid / 120
 
     writer.add_scalars('Loss', {'trainset': running_loss_train,'validset': running_loss_valid}, epoch+1)
     writer.add_scalars('Accuracy', {'trainset': Accuracy_Train,'validset': Accuracy_Valid}, epoch+1)
 
 writer.close()
+print("Max Accuracy in validtest: ", max)
 print('Finished')
 
 """
