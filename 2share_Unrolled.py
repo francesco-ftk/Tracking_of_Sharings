@@ -7,7 +7,6 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from torch.utils.data import Dataset
 
-
 ######################################################################################
 #    ESEGUO METODO UNROLLED:
 #    - DATASET NORMALIZZATO E 4 Labels
@@ -42,11 +41,12 @@ from torch.utils.data import Dataset
 batch_size_train = 117
 batch_size_valid_and_test = 60
 
+
 class CustomDataset(Dataset):
-    def __init__(self, Features, Labels1, Labels2,  transform=None, target_transform=None):
+    def __init__(self, Features, Labels1, Labels2, transform=None, target_transform=None):
         self.labels1 = Labels1
         self.labels2 = Labels2
-        self.features= Features
+        self.features = Features
         self.transform = transform
         self.target_transform = target_transform
 
@@ -64,9 +64,11 @@ class CustomDataset(Dataset):
             labels2 = self.target_transform(labels2)
         return image, labels1, labels2
 
+
 input_size = 531
 hidden_sizes = [256, 128, 32]
 output_size = 3
+
 
 class NetMLPLatent(nn.Module):
     def __init__(self, input_size, hidden_sizes, output_size):
@@ -78,23 +80,25 @@ class NetMLPLatent(nn.Module):
         self.fl4 = nn.Linear(hidden_sizes[2], output_size)
 
     def forward(self, x, h):
-        x = torch.cat((x, h), 1)   # Concatenates the h tensor to input x.
+        x = torch.cat((x, h), 1)  # Concatenates the h tensor to input x.
         x = F.relu(self.fl1(x))
         x = F.relu(self.fl2(x))
         latent = F.relu(self.fl3(x))
         x = self.fl4(latent)
         return x, latent
 
+
 class NetMLPUnrolled(nn.Module):
     def __init__(self, input_size, hidden_sizes, output_size):
         super().__init__()
         self.share1 = NetMLPLatent(input_size, hidden_sizes, output_size)
-        self.share2 = NetMLPLatent(input_size, hidden_sizes, output_size+1)
+        self.share2 = NetMLPLatent(input_size, hidden_sizes, output_size + 1)
 
     def forward(self, x, batch_size):
         share1, latent = self.share1(x, torch.zeros([batch_size, self.share1.latent_size]))
         share2, _ = self.share2(x, latent)
         return share1, share2
+
 
 f = h5py.File('12LabelsNormalized.h5', 'r')
 f1 = h5py.File('doubleLabels.h5', 'r')
@@ -142,6 +146,7 @@ for epoch in range(80):  # loop over the dataset multiple times
 
 print('Finished Training')
 
+
 PATH = './last.pth'
 torch.save(net.state_dict(), PATH)
 
@@ -163,30 +168,28 @@ first_share = 0
 second_share = 0
 correct = 0
 total = 0
-a = 0
 # since we're not training, we don't need to calculate the gradients for our outputs
 with torch.no_grad():
     for data in validDataloader:
         images, labels1, labels2 = data
         # calculate outputs by running images through the network
-        output1, output2 = net(images,batch_size_valid_and_test)
+        output1, output2 = net(images, batch_size_valid_and_test)
         # the class with the highest energy is what we choose as prediction
         _, predicted1 = torch.max(output1.data, 1)
         _, predicted2 = torch.max(output2.data, 1)
         total += labels1.size(0)
         for i in range(len(predicted1)):
             if predicted1[i] == labels1[i]:
-                first_share +=1
+                first_share += 1
                 if predicted2[i] == labels2[i]:
-                    second_share +=1
-                    correct +=1
+                    second_share += 1
+                    correct += 1
             elif predicted2[i] == labels2[i]:
-                    second_share +=1
+                second_share += 1
 
 print('Accuracy of the network on the 7020 validation images: %.2f %%' % (100 * correct / total))
-print('Accuracy of the network on the last share: %.2f %%' % (100 * first_share/ total))
-print('Accuracy of the network on the second-last share: %.2f %%' % (100 * second_share/ total))
-
+print('Accuracy of the network on the last share: %.2f %%' % (100 * first_share / total))
+print('Accuracy of the network on the second-last share: %.2f %%' % (100 * second_share / total))
 
 Features = f['test/features']
 Labels1 = f1['test/labels/share1']
@@ -204,24 +207,24 @@ with torch.no_grad():
     for data in testDataloader:
         images, labels1, labels2 = data
         # calculate outputs by running images through the network
-        output1, output2 = net(images,batch_size_valid_and_test)
+        output1, output2 = net(images, batch_size_valid_and_test)
         # the class with the highest energy is what we choose as prediction
         _, predicted1 = torch.max(output1.data, 1)
         _, predicted2 = torch.max(output2.data, 1)
         total += labels1.size(0)
         for i in range(len(predicted1)):
             if predicted1[i] == labels1[i]:
-                first_share +=1
+                first_share += 1
                 if predicted2[i] == labels2[i]:
-                    second_share +=1
-                    correct +=1
+                    second_share += 1
+                    correct += 1
             elif predicted2[i] == labels2[i]:
-                    second_share +=1
+                second_share += 1
 
 print("\n")
 print('Accuracy of the network on the 7020 test images: %.2f %%' % (100 * correct / total))
-print('Accuracy of the network on the last share: %.2f %%' % (100 * first_share/ total))
-print('Accuracy of the network on the second-last share: %.2f %%' % (100 * second_share/ total))
+print('Accuracy of the network on the last share: %.2f %%' % (100 * first_share / total))
+print('Accuracy of the network on the second-last share: %.2f %%' % (100 * second_share / total))
 
 # STAMPO ACCURATEZZA PER OGNI CLASSE SUL TESTSET
 
@@ -235,7 +238,7 @@ total_pred = {classname: 0 for classname in classes}
 with torch.no_grad():
     for data in testDataloader:
         images, labels1, labels2 = data
-        output1, output2 = net(images,batch_size_valid_and_test)
+        output1, output2 = net(images, batch_size_valid_and_test)
         _, predicted1 = torch.max(output1.data, 1)
         _, predicted2 = torch.max(output2.data, 1)
         # collect the correct predictions for each class
@@ -253,8 +256,7 @@ print("\n")
 for classname, correct_count in correct_pred.items():
     accuracy = 100 * float(correct_count) / total_pred[classname]
     print("Accuracy for class {:2s} is: {:.1f} %".format(classname,
-                                                   accuracy))
-
+                                                         accuracy))
 
 """
 
@@ -287,5 +289,3 @@ class NetUnified(nn.Module):
         share2 = self.share2(share2)
         return share1, share2   
 """
-
-
