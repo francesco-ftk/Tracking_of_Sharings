@@ -113,13 +113,13 @@ validDataloader = torch.utils.data.DataLoader(validationSet, batch_size=batch_si
 
 net = NetMLPUnrolled(input_size, hidden_sizes, output_size)
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(net.parameters())
+optimizer = optim.Adam(net.parameters(), weight_decay=1e-5)
 
 # Writer will output to ./runs/ directory by default
 writer = SummaryWriter("runs1")
 max = 0
 
-for epoch in range(200):  # loop over the dataset multiple times
+for epoch in range(90):  # loop over the dataset multiple times
 
     print('Running Epoch: ', epoch)
 
@@ -202,3 +202,18 @@ print("Max Accuracy in validtest: ", max)
 print('Finished')
 
 # DA TERMINALE IN BASSO -> tensorboard --logdir=runs
+
+
+
+"""
+ ### METODO STRANO
+
+        optimizer.zero_grad()
+
+        output1, output2 = net(inputs, batch_size_train)
+        loss1 = criterion(output1, labels1)
+        loss2 = criterion(output2, labels2)
+        loss1.backward(retain_graph=True)
+        loss2.backward()
+        optimizer.step()
+"""

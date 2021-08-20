@@ -11,11 +11,24 @@ from torch.utils.tensorboard import SummaryWriter
 ######################################################################################
 ### ESEGUO METODO IN "2share_Unrolled.py" PER FARE PLOT DI ACCURACY E LOSS
 ### SUL TRAINSET E VALIDSET PER 150 EPOCHE DI ADDESTRAMENTO.
+
 ### DAL PLOT RISULTA CHE L'OVERFIT INIZA FRA LA 20-ESIMA E 40-ESIMA EPOCA
 ### DI ADDESTRAMENTO. L'ACCURATEZZA DEL VALIDSET AUMENTA FINO A STABILIZZARSI
 ### VERSO LA 75-EPOCA.
 
 ### 2 METODI DIVERSI
+
+### RETE CON LA MIGLIORE ACCURATEZZA SUL VALIDSET:
+#    ESEGUO METODO 3 UNROLLED:
+#    - DATASET NORMALIZZATO E 3 Labels per la prima condivisione e  4 per la seconda Labels
+#    - 80/90 epoche
+#    - CrossEntropy
+#    - 117 Batch Size per training
+#    - 60 Batch Size per Validation e Test
+#    - 3 livelli nascosti, 531 [256, 128, 32] 3/4
+#    - Adam con weight_decay=1e-5 ---> 80.51% sul valid, 81.04% sul test
+#    81.04_Unrolled_Metodo3.pth
+
 
 batch_size_train = 117
 batch_size_valid_and_test = 60
@@ -103,14 +116,14 @@ validDataloader = torch.utils.data.DataLoader(validationSet, batch_size=batch_si
 
 net = NetMLPUnrolled(input_size, hidden_sizes, output_size)
 criterion = nn.CrossEntropyLoss()
-optimizer1 = optim.Adam(net.share1.parameters())
-optimizer2 = optim.Adam(net.share2.parameters())
+optimizer1 = optim.Adam(net.share1.parameters(), weight_decay=1e-5)
+optimizer2 = optim.Adam(net.share2.parameters(), weight_decay=1e-5)
 
 # Writer will output to ./runs/ directory by default
 writer = SummaryWriter("runs3")
 max = 0
 
-for epoch in range(150):  # loop over the dataset multiple times
+for epoch in range(90):  # loop over the dataset multiple times
 
     print('Running Epoch: ', epoch)
 
