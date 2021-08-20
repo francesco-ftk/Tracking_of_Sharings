@@ -15,17 +15,7 @@ from torch.utils.tensorboard import SummaryWriter
 ### DI ADDESTRAMENTO. L'ACCURATEZZA DEL VALIDSET AUMENTA FINO A STABILIZZARSI
 ### VERSO LA 75-EPOCA.
 
-### RETE CON LA MIGLIORE ACCURATEZZA SUL VALIDSET:
-#    ESEGUO METODO UNROLLED:
-#    - DATASET NORMALIZZATO E 3 Labels per la prima condivisione e  4 per la seconda Labels
-#    - 132 epoche
-#    - CrossEntropy
-#    - 117 Batch Size per training
-#    - 60 Batch Size per Validation e Test
-#    - 3 livelli nascosti, 531 [256, 128, 32] 3/4
-#    - Adam ---> 80.75% sul valid, 81.34% sul test
-#    81.34_Unrolled.pth
-
+### 2 METODI DIVERSI
 
 batch_size_train = 117
 batch_size_valid_and_test = 60
@@ -113,30 +103,49 @@ validDataloader = torch.utils.data.DataLoader(validationSet, batch_size=batch_si
 
 net = NetMLPUnrolled(input_size, hidden_sizes, output_size)
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(net.parameters())
+optimizer1 = optim.Adam(net.share1.parameters())
+optimizer2 = optim.Adam(net.share2.parameters())
 
 # Writer will output to ./runs/ directory by default
-writer = SummaryWriter("runs1")
+writer = SummaryWriter("runs2")
 max = 0
 
-for epoch in range(200):  # loop over the dataset multiple times
+for epoch in range(150):  # loop over the dataset multiple times
 
     print('Running Epoch: ', epoch)
 
     for i, data in enumerate(trainDataloader, 0):
         inputs, labels1, labels2 = data
 
-        ### METODO 1
+        ### METODO 2
 
-        # zero the parameter gradients
-        optimizer.zero_grad()
+        output1, output2 = net(inputs, batch_size_train)
+
+        optimizer1.zero_grad()
+        loss1 = criterion(output1, labels1)
+        loss1.backward(retain_graph=True)
+        optimizer2.zero_grad()
+        loss2 = criterion(output2, labels2)
+        loss2.backward()
+        optimizer1.step()
+        optimizer2.step()
+
+        ### METODO 3
+
+        """
+        optimizer1.zero_grad()
+        optimizer2.zero_grad()
 
         output1, output2 = net(inputs, batch_size_train)
         loss1 = criterion(output1, labels1)
         loss2 = criterion(output2, labels2)
         loss = loss1 + loss2
         loss.backward()
-        optimizer.step()
+
+        optimizer1.step()
+        optimizer2.step() 
+        """
+
 
     running_loss_train = 0.0
     correct = 0
