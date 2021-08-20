@@ -265,6 +265,8 @@ file.close()
 
 """
 
+######################################################################################
+ ### CODICE PER CREARE UN DATASET CON 39 LABELS ###
 
 def to39Labels(labels):
     newLabels = np.empty([0,0])
@@ -292,6 +294,71 @@ newfile.create_dataset('test/labels', (7020,), dtype='int64', data=testLabels)
 newfile.close()
 file.close()
 """
+
+######################################################################################
+ ### CODICE PER CREARE TRE LABELS: UNA SU 3 CLASSI
+ ### PER LA PRIMA CONDIVISIONE (3 social) E DUE SU 4 CLASSI PER LA
+ ### SECONDA E LA TERZA (3 social + none) ###
+
+
+def toTripleLabels(labels):
+    newLabels = np.empty([0,0])
+    newLabels1 = np.empty([0,0])
+    newLabels2 = np.empty([0,0])
+    for i in range(0,labels.shape[0],1):
+        if(labels[i] == 0):
+            newLabels = np.append(newLabels, 0)
+            newLabels1 = np.append(newLabels1, 3)
+            newLabels2 = np.append(newLabels1, 3)
+        elif(labels[i] == 1):
+             newLabels = np.append(newLabels, 1)
+             newLabels1 = np.append(newLabels1, 3)
+             newLabels2 = np.append(newLabels1, 3)
+        elif(labels[i] == 2):
+             newLabels = np.append(newLabels, 2)
+             newLabels1 = np.append(newLabels1, 3)
+             newLabels2 = np.append(newLabels1, 3)
+        elif(labels[i] == 3):
+             newLabels = np.append(newLabels, 0)
+             newLabels1 = np.append(newLabels1, 0)
+             newLabels2 = np.append(newLabels1, 3)
+        elif(labels[i] == 4):
+             newLabels = np.append(newLabels, 1)
+             newLabels1 = np.append(newLabels1, 0)
+             newLabels2 = np.append(newLabels1, 3)
+        elif(labels[i] == 5):
+             newLabels = np.append(newLabels, 2)
+             newLabels1 = np.append(newLabels1, 0)
+             newLabels2 = np.append(newLabels1, 3)
+        elif(labels[i] == 6):
+             newLabels = np.append(newLabels, 0)
+             newLabels1 = np.append(newLabels1, 1)
+             newLabels2 = np.append(newLabels1, 3)
+        elif(labels[i] == 7):
+             newLabels = np.append(newLabels, 1)
+             newLabels1 = np.append(newLabels1, 1)
+             newLabels2 = np.append(newLabels1, 3)
+        elif(labels[i] == 8):
+             newLabels = np.append(newLabels, 2)
+             newLabels1 = np.append(newLabels1, 1)
+             newLabels2 = np.append(newLabels1, 3)
+        elif(labels[i] == 9):
+             newLabels = np.append(newLabels, 0)
+             newLabels1 = np.append(newLabels1, 2)
+             newLabels2 = np.append(newLabels1, 3)
+        elif(labels[i] == 10):
+             newLabels = np.append(newLabels, 1)
+             newLabels1 = np.append(newLabels1, 2)
+             newLabels2 = np.append(newLabels1, 3)
+        elif(labels[i] == 11):
+             newLabels = np.append(newLabels, 2)
+             newLabels1 = np.append(newLabels1, 2)
+             newLabels2 = np.append(newLabels1, 3)
+            # TODO
+    newLabels = np.int_(newLabels)
+    newLabels1 = np.int_(newLabels1)
+    newLabels2 = np.int_(newLabels2)
+    return newLabels, newLabels1, newLabels2
 
 
 
