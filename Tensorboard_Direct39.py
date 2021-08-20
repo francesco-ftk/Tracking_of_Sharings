@@ -14,18 +14,18 @@ from torch.utils.tensorboard import SummaryWriter
 
 ### DAL PLOT RISULTA CHE L'OVERFIT INIZA FRA LA 20-ESIMA E 40-ESIMA EPOCA
 ### DI ADDESTRAMENTO. L'ACCURATEZZA DEL VALIDSET AUMENTA FINO A STABILIZZARSI
-### VERSO LA 75-EPOCA.
+### VERSO LA 80-EPOCA.
 
 ### RETE CON LA MIGLIORE ACCURATEZZA SUL VALIDSET:
 #    ESEGUO METODO DIRECT39:
 #    - DATASET NORMALIZZATO E 39 LABELS
-#    -  /150 epoche
+#    - 149/150 epoche
 #    - CrossEntropy
 #    - 117 Batch Size per training
 #    - 60 Batch Size per Validation e Test
-#    - 3 livelli nascosti, 531 [256, 128, 64] 39
-#    - Adam --->  sul valid,  sul test
-#
+#    - 2 livelli nascosti, 531 [256, 128] 39
+#    - Adam --->  50.66% sul valid, 51.18% sul test
+#    51Direct39.pth
 
 
 batch_size_train = 117
@@ -51,7 +51,7 @@ class CustomDataset(Dataset):
         return image, label
 
 input_size = 531
-hidden_sizes = [256, 128, 64]
+hidden_sizes = [256, 128] # [256, 128, 64]
 output_size = 39
 
 class NetMLP(nn.Module):
@@ -59,18 +59,20 @@ class NetMLP(nn.Module):
         super().__init__()
         self.fl1 = nn.Linear(input_size, hidden_sizes[0])
         self.fl2 = nn.Linear(hidden_sizes[0], hidden_sizes[1])
-        self.fl3 = nn.Linear(hidden_sizes[1], hidden_sizes[2])
-        self.fl4 = nn.Linear(hidden_sizes[2], output_size)
+        #self.fl3 = nn.Linear(hidden_sizes[1], hidden_sizes[2])
+        self.fl4 = nn.Linear(hidden_sizes[1], output_size)
 
     def forward(self, x):
         x = F.relu(self.fl1(x))
         x = F.relu(self.fl2(x))
-        x = F.relu(self.fl3(x))
+        #x = F.relu(self.fl3(x))
         x = self.fl4(x)
         return x
 
 f = h5py.File('12LabelsNormalized.h5', 'r')
-f1 = h5py.File('dataset.h5', 'r')
+f1 = h5py.File('39Labels.h5', 'r')
+
+"""
 
 Features_test = f['train/features']
 Labels_test = f1['train/labels']
@@ -94,7 +96,7 @@ criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(net.parameters())
 
 # Writer will output to ./runs/ directory by default
-writer = SummaryWriter("MetodoDirect39")
+writer = SummaryWriter("2HideMetodoDirect39")
 max = 0
 
 for epoch in range(150):
@@ -166,13 +168,13 @@ print('Finished')
 
 # Salvataggio
 net = NetMLP(input_size, hidden_sizes, output_size)
-PATH = './last.pth'
+PATH = './51Direct39.pth'
 net.load_state_dict(torch.load(PATH))
 
 Features = f['valid/features']
 Labels= f1['valid/labels']
 
-validationSet = CustomDataset(Features,Labels)
+validationSet = CustomDataset(Features, Labels)
 validDataloader = torch.utils.data.DataLoader(validationSet, batch_size=60, shuffle=False)
 
 correct = 0
@@ -191,7 +193,7 @@ print('Accuracy of the network on the 7020 validation images: %.2f %%' % (100 * 
 Features = f['test/features']
 Labels= f1['test/labels']
 
-testSet = CustomDataset(Features,Labels)
+testSet = CustomDataset(Features, Labels)
 testDataloader = torch.utils.data.DataLoader(testSet, batch_size=60, shuffle=False)
 
 correct = 0
@@ -207,4 +209,4 @@ with torch.no_grad():
 
 print('Accuracy of the network on the 7020 test images: %.2f %%' % (100 * correct / total))
 
-"""
+

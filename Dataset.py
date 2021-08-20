@@ -264,3 +264,36 @@ newfile.close()
 file.close()
 
 """
+
+
+def to39Labels(labels):
+    newLabels = np.empty([0,0])
+    for i in range(0,labels.shape[0],1):
+        newLabels = np.append(newLabels, labels[i])
+    newLabels = np.int_(newLabels)
+    return newLabels
+
+"""
+# Apro il file h5py
+file = h5py.File('dataset.h5', 'r')
+trainLabels = file['train/labels']
+validLabels = file['valid/labels']
+testLabels = file['test/labels']
+
+newfile = h5py.File('39Labels.h5', 'a')
+
+trainLabels= to39Labels(trainLabels)
+newfile.create_dataset('train/labels', (21060,), dtype='int64', data=trainLabels)
+validLabels= to39Labels(validLabels)
+newfile.create_dataset('valid/labels', (7020,), dtype='int64', data=validLabels)
+testLabels= to39Labels(testLabels)
+newfile.create_dataset('test/labels', (7020,), dtype='int64', data=testLabels)
+
+newfile.close()
+file.close()
+"""
+
+
+
+
+
