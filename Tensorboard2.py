@@ -107,7 +107,7 @@ optimizer1 = optim.Adam(net.share1.parameters())
 optimizer2 = optim.Adam(net.share2.parameters())
 
 # Writer will output to ./runs/ directory by default
-writer = SummaryWriter("runs2")
+writer = SummaryWriter("runs3")
 max = 0
 
 for epoch in range(150):  # loop over the dataset multiple times
@@ -117,8 +117,9 @@ for epoch in range(150):  # loop over the dataset multiple times
     for i, data in enumerate(trainDataloader, 0):
         inputs, labels1, labels2 = data
 
+        """
         ### METODO 2
-
+        
         output1, output2 = net(inputs, batch_size_train)
 
         optimizer1.zero_grad()
@@ -130,9 +131,10 @@ for epoch in range(150):  # loop over the dataset multiple times
         optimizer1.step()
         optimizer2.step()
 
+        """
+
         ### METODO 3
 
-        """
         optimizer1.zero_grad()
         optimizer2.zero_grad()
 
@@ -144,7 +146,7 @@ for epoch in range(150):  # loop over the dataset multiple times
 
         optimizer1.step()
         optimizer2.step() 
-        """
+
 
 
     running_loss_train = 0.0

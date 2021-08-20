@@ -18,6 +18,16 @@ from torch.utils.data import Dataset
 #    - optimizer Adam ---> 100%
 #    100Adam.pth
 
+#    ESEGUO MLP CON:
+#    - DATASET NORMALIZZATO E 3 Labels
+#    - 20 epoche
+#    - CrossEntropy
+#    - 117 Batch Size per training
+#    - 60 Batch Size per Validation e Test
+#    - 3 livelli nascosti, 531 [256, 128, 32] 3
+#    - optimizer SGD ---> 100%
+#    100SGD.pth
+
 class CustomDataset(Dataset):
     def __init__(self, Features, Labels,  transform=None, target_transform=None):
         self.labels = Labels
@@ -47,14 +57,15 @@ class NetMLP(nn.Module):
         self.fl1 = nn.Linear(input_size, hidden_sizes[0])
         self.fl2 = nn.Linear(hidden_sizes[0], hidden_sizes[1])
         self.fl3 = nn.Linear(hidden_sizes[1], hidden_sizes[2])
-        self.fl6 = nn.Linear(hidden_sizes[2], output_size)
+        self.fl4 = nn.Linear(hidden_sizes[2], output_size)
 
     def forward(self, x):
         x = F.relu(self.fl1(x))
         x = F.relu(self.fl2(x))
         x = F.relu(self.fl3(x))
-        x = self.fl6(x)
+        x = self.fl4(x)
         return x
+
 
 classes = ('FB', 'FL', 'TW')
 
@@ -77,6 +88,7 @@ trainDataloader = DataLoader(trainingSet, batch_size=117, shuffle=True)
 net = NetMLP(input_size, hidden_sizes, output_size)
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(net.parameters())
+# optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 
 for epoch in range(20):  # loop over the dataset multiple times
 
@@ -103,10 +115,8 @@ for epoch in range(20):  # loop over the dataset multiple times
 
 print('Finished Training')
 
-PATH = './last.pth'
+PATH = './100Adam.pth'
 torch.save(net.state_dict(), PATH)
-
-"""
 
 validSet = f['valid']
 Features = validSet['features']
@@ -115,6 +125,7 @@ Labels= validSet['labels']
 validationSet = CustomDataset(Features,Labels)
 validDataloader = torch.utils.data.DataLoader(validationSet, batch_size=60, shuffle=False)
 
+"""
 # Salvataggio
 net = NetMLP(input_size, hidden_sizes, output_size)
 PATH = './100Adam.pth'

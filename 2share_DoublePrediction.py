@@ -21,16 +21,6 @@ from torch.utils.data import Dataset
 
 #    ESEGUO METODO MLP CON DOPPIO OUTPUT CONTEMPORANEO E LOSS SOMMATA CON:
 #    - DATASET NORMALIZZATO E 3 Labels per la prima share e 4 Labels per la seconda
-#    - 45 epoche
-#    - CrossEntropy
-#    - 117 Batch Size per training
-#    - 60 Batch Size per Validation e Test
-#    - 3 livelli nascosti, 531 [256, 128, 32] 3/4
-#    - optimizer Adam ---> 77%, 78% nel test
-#    AdamDoubleSum77.pth
-
-#    ESEGUO METODO MLP CON DOPPIO OUTPUT CONTEMPORANEO E LOSS SOMMATA CON:
-#    - DATASET NORMALIZZATO E 3 Labels per la prima share e 4 Labels per la seconda
 #    - 25 epoche
 #    - CrossEntropy
 #    - 117 Batch Size per training

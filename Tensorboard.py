@@ -18,7 +18,7 @@ from torch.utils.tensorboard import SummaryWriter
 ### RETE CON LA MIGLIORE ACCURATEZZA SUL VALIDSET:
 #    ESEGUO METODO UNROLLED:
 #    - DATASET NORMALIZZATO E 3 Labels per la prima condivisione e  4 per la seconda Labels
-#    - 132 epoche
+#    - 132/150 epoche
 #    - CrossEntropy
 #    - 117 Batch Size per training
 #    - 60 Batch Size per Validation e Test

@@ -9,16 +9,6 @@ from torch.utils.data import Dataset
 
 ######################################################################################
 #    ESEGUO METODO UNROLLED:
-#    - DATASET NORMALIZZATO E 4 Labels
-#    - 35 epoche
-#    - CrossEntropy
-#    - 117 Batch Size per training
-#    - 60 Batch Size per Validation e Test
-#    - 3 livelli nascosti, 531 [256, 128, 16] 4
-#    - Adam ---> 79%
-#    79UnrolledAdam.pth
-
-#    ESEGUO METODO UNROLLED:
 #    - DATASET NORMALIZZATO E 3 Labels per la prima condivisione e  4 per la seconda Labels
 #    - 80 epoche
 #    - CrossEntropy

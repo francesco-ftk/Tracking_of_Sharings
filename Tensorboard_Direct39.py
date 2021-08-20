@@ -6,28 +6,30 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from torch.utils.data import Dataset
-
+from torch.utils.tensorboard import SummaryWriter
 
 ######################################################################################
-#    ESEGUO MLP CON:
-#    - DATASET NORMALIZZATO E 12 Labels
-#    - 60 epoche
-#    - CrossEntropy
-#    - 117 Batch Size per training
-#    - 60 Batch Size per Validation e Test
-#    - 3 livelli nascosti, 531 [256, 128, 64] 12
-#    - optimizer SGD con Nesterov Momentum ---> 75% con loss di 0.562
-#    75Nesterov2.pth
+### ESEGUO METODO DIRETTO SU 39 CLASSI PER FARE PLOT DI ACCURACY E LOSS
+### SUL TRAINSET E VALIDSET PER 150 EPOCHE DI ADDESTRAMENTO.
 
-#    ESEGUO MLP CON:
-#    - DATASET NORMALIZZATO E 12 Labels
-#    - 45 epoche
+### DAL PLOT RISULTA CHE L'OVERFIT INIZA FRA LA 20-ESIMA E 40-ESIMA EPOCA
+### DI ADDESTRAMENTO. L'ACCURATEZZA DEL VALIDSET AUMENTA FINO A STABILIZZARSI
+### VERSO LA 75-EPOCA.
+
+### RETE CON LA MIGLIORE ACCURATEZZA SUL VALIDSET:
+#    ESEGUO METODO DIRECT39:
+#    - DATASET NORMALIZZATO E 39 LABELS
+#    -  /150 epoche
 #    - CrossEntropy
 #    - 117 Batch Size per training
 #    - 60 Batch Size per Validation e Test
-#    - 3 livelli nascosti, 531 [256, 128, 64] 12
-#    - optimizer Adam ---> 79% con loss di 0.392
-#    79Adam2.pth
+#    - 3 livelli nascosti, 531 [256, 128, 64] 39
+#    - Adam --->  sul valid,  sul test
+#
+
+
+batch_size_train = 117
+batch_size_valid_and_test = 60
 
 class CustomDataset(Dataset):
     def __init__(self, Features, Labels,  transform=None, target_transform=None):
@@ -50,7 +52,7 @@ class CustomDataset(Dataset):
 
 input_size = 531
 hidden_sizes = [256, 128, 64]
-output_size = 12
+output_size = 39
 
 class NetMLP(nn.Module):
     def __init__(self, input_size, hidden_sizes, output_size):
@@ -67,52 +69,98 @@ class NetMLP(nn.Module):
         x = self.fl4(x)
         return x
 
-#classes = ('FB', 'FL', 'TW')
-
 f = h5py.File('12LabelsNormalized.h5', 'r')
+f1 = h5py.File('dataset.h5', 'r')
 
-"""
-
-Features = f['train/features']
-Labels= f['train/labels']
+Features_test = f['train/features']
+Labels_test = f1['train/labels']
 
 # trasform = none perché escono già come Tensori
 
-trainingSet = CustomDataset(Features,Labels)
-trainDataloader = DataLoader(trainingSet, batch_size=117, shuffle=True)
+trainingSet = CustomDataset(Features_test, Labels_test)
+trainDataloader = DataLoader(trainingSet, batch_size=batch_size_train, shuffle=True)
+
+trainingSet1 = CustomDataset(Features_test, Labels_test)
+trainDataloader1 = DataLoader(trainingSet1, batch_size=batch_size_train, shuffle=False)
+
+Features = f['valid/features']
+Labels1 = f1['valid/labels']
+
+validationSet = CustomDataset(Features, Labels1)
+validDataloader = torch.utils.data.DataLoader(validationSet, batch_size=batch_size_valid_and_test, shuffle=False)
 
 net = NetMLP(input_size, hidden_sizes, output_size)
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(net.parameters())
-#optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9, nesterov=True)
 
-for epoch in range(45):  # loop over the dataset multiple times
+# Writer will output to ./runs/ directory by default
+writer = SummaryWriter("MetodoDirect39")
+max = 0
 
-    running_loss = 0.0
+for epoch in range(150):
+
+    print('Running Epoch: ', epoch)
+
     for i, data in enumerate(trainDataloader, 0):
-        # get the inputs; data is a list of [inputs, labels]
         inputs, labels = data
 
-        # zero the parameter gradients
         optimizer.zero_grad()
 
-        # forward + backward + optimize
         outputs = net(inputs)
         loss = criterion(outputs, labels)
         loss.backward()
         optimizer.step()
 
-        # print statistics
-        running_loss += loss.item()
-        if i % 18 == 17:
-            print('[%d, %5d] loss: %.3f' %
-                  (epoch + 1, i + 1, running_loss / 18))
-            running_loss = 0.0
+    running_loss_train = 0.0
+    correct = 0
+    total = 0
 
-print('Finished Training')
+    with torch.no_grad():
+        for data in trainDataloader1:
+            inputs, labels = data
 
-PATH = './last.pth'
-torch.save(net.state_dict(), PATH)
+            outputs = net(inputs)
+            loss = criterion(outputs, labels)
+            running_loss_train += loss.item()
+
+            _, predicted = torch.max(outputs.data, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
+
+    Accuracy_Train = 100 * correct / total
+    running_loss_train = running_loss_train/ 180
+
+    running_loss_valid = 0.0
+    correct = 0
+    total = 0
+
+    with torch.no_grad():
+        for data in validDataloader:
+            inputs, labels = data
+
+            outputs = net(inputs)
+            loss = criterion(outputs, labels)
+            running_loss_valid += loss.item()
+
+            _, predicted = torch.max(outputs.data, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
+
+    Accuracy_Valid = 100 * correct / total
+
+    if Accuracy_Valid > max:
+        max = Accuracy_Valid
+        PATH = './last1.pth'
+        torch.save(net.state_dict(), PATH)
+
+    running_loss_valid = running_loss_valid / 120
+
+    writer.add_scalars('Loss', {'trainset': running_loss_train,'validset': running_loss_valid}, epoch+1)
+    writer.add_scalars('Accuracy', {'trainset': Accuracy_Train,'validset': Accuracy_Valid}, epoch+1)
+
+writer.close()
+print("Max Accuracy in validtest: ", max)
+print('Finished')
 
 """
 
@@ -121,9 +169,8 @@ net = NetMLP(input_size, hidden_sizes, output_size)
 PATH = './last.pth'
 net.load_state_dict(torch.load(PATH))
 
-validSet = f['valid']
-Features = validSet['features']
-Labels= validSet['labels']
+Features = f['valid/features']
+Labels= f1['valid/labels']
 
 validationSet = CustomDataset(Features,Labels)
 validDataloader = torch.utils.data.DataLoader(validationSet, batch_size=60, shuffle=False)
@@ -134,19 +181,15 @@ total = 0
 with torch.no_grad():
     for data in validDataloader:
         images, labels = data
-        # calculate outputs by running images through the network
         outputs = net(images)
-        # the class with the highest energy is what we choose as prediction
         _, predicted = torch.max(outputs.data, 1)
         total += labels.size(0)
         correct += (predicted == labels).sum().item()
 
 print('Accuracy of the network on the 7020 validation images: %.2f %%' % (100 * correct / total))
 
-
-testSet = f['test']
-Features = testSet['features']
-Labels= testSet['labels']
+Features = f['test/features']
+Labels= f1['test/labels']
 
 testSet = CustomDataset(Features,Labels)
 testDataloader = torch.utils.data.DataLoader(testSet, batch_size=60, shuffle=False)
@@ -157,13 +200,11 @@ total = 0
 with torch.no_grad():
     for data in testDataloader:
         images, labels = data
-        # calculate outputs by running images through the network
         outputs = net(images)
-        # the class with the highest energy is what we choose as prediction
         _, predicted = torch.max(outputs.data, 1)
         total += labels.size(0)
         correct += (predicted == labels).sum().item()
 
 print('Accuracy of the network on the 7020 test images: %.2f %%' % (100 * correct / total))
 
-
+"""
