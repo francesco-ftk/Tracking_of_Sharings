@@ -29,6 +29,22 @@ from torch.utils.tensorboard import SummaryWriter
 #    - Adam con weight_decay=1e-5 ---> 80.51% sul valid, 81.04% sul test
 #    81.04_Unrolled_Metodo3.pth
 
+### RETE CON LA MIGLIORE ACCURATEZZA SUL VALIDSET:
+#    ESEGUO METODO 2 UNROLLED:
+#    - DATASET NORMALIZZATO E 3 Labels per la prima condivisione e  4 per la seconda Labels
+#    - 88/150 epoche
+#    - CrossEntropy
+#    - 117 Batch Size per training
+#    - 60 Batch Size per Validation e Test
+#    - 3 livelli nascosti, 531 [256, 128, 32] 3/4
+#    - Adam ---> 80.75% sul valid, 81.44% sul test
+#    81.44_Unrolled_Metodo2.pth
+
+# Accuracy for class FB is: 96.2 %
+# Accuracy for class FL is: 93.6 %
+# Accuracy for class TW is: 87.7 %
+# Accuracy for class NONE is: 45.7 %
+
 
 batch_size_train = 117
 batch_size_valid_and_test = 60
@@ -116,21 +132,22 @@ validDataloader = torch.utils.data.DataLoader(validationSet, batch_size=batch_si
 
 net = NetMLPUnrolled(input_size, hidden_sizes, output_size)
 criterion = nn.CrossEntropyLoss()
-optimizer1 = optim.Adam(net.share1.parameters(), weight_decay=1e-5)
-optimizer2 = optim.Adam(net.share2.parameters(), weight_decay=1e-5)
+optimizer1 = optim.Adam(net.share1.parameters())
+# weight_decay=1e-5
+optimizer2 = optim.Adam(net.share2.parameters())
 
 # Writer will output to ./runs/ directory by default
-writer = SummaryWriter("runs3")
+writer = SummaryWriter("runs")
 max = 0
 
-for epoch in range(90):  # loop over the dataset multiple times
+for epoch in range(150):  # loop over the dataset multiple times
 
     print('Running Epoch: ', epoch)
 
     for i, data in enumerate(trainDataloader, 0):
         inputs, labels1, labels2 = data
 
-        """
+
         ### METODO 2
         
         output1, output2 = net(inputs, batch_size_train)
@@ -159,6 +176,8 @@ for epoch in range(90):  # loop over the dataset multiple times
 
         optimizer1.step()
         optimizer2.step() 
+        
+        """
 
 
 
