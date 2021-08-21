@@ -309,56 +309,189 @@ def toTripleLabels(labels):
         if(labels[i] == 0):
             newLabels = np.append(newLabels, 0)
             newLabels1 = np.append(newLabels1, 3)
-            newLabels2 = np.append(newLabels1, 3)
+            newLabels2 = np.append(newLabels2, 3)
         elif(labels[i] == 1):
              newLabels = np.append(newLabels, 1)
              newLabels1 = np.append(newLabels1, 3)
-             newLabels2 = np.append(newLabels1, 3)
+             newLabels2 = np.append(newLabels2, 3)
         elif(labels[i] == 2):
              newLabels = np.append(newLabels, 2)
              newLabels1 = np.append(newLabels1, 3)
-             newLabels2 = np.append(newLabels1, 3)
+             newLabels2 = np.append(newLabels2, 3)
         elif(labels[i] == 3):
              newLabels = np.append(newLabels, 0)
              newLabels1 = np.append(newLabels1, 0)
-             newLabels2 = np.append(newLabels1, 3)
+             newLabels2 = np.append(newLabels2, 3)
         elif(labels[i] == 4):
              newLabels = np.append(newLabels, 1)
              newLabels1 = np.append(newLabels1, 0)
-             newLabels2 = np.append(newLabels1, 3)
+             newLabels2 = np.append(newLabels2, 3)
         elif(labels[i] == 5):
              newLabels = np.append(newLabels, 2)
              newLabels1 = np.append(newLabels1, 0)
-             newLabels2 = np.append(newLabels1, 3)
+             newLabels2 = np.append(newLabels2, 3)
         elif(labels[i] == 6):
              newLabels = np.append(newLabels, 0)
              newLabels1 = np.append(newLabels1, 1)
-             newLabels2 = np.append(newLabels1, 3)
+             newLabels2 = np.append(newLabels2, 3)
         elif(labels[i] == 7):
              newLabels = np.append(newLabels, 1)
              newLabels1 = np.append(newLabels1, 1)
-             newLabels2 = np.append(newLabels1, 3)
+             newLabels2 = np.append(newLabels2, 3)
         elif(labels[i] == 8):
              newLabels = np.append(newLabels, 2)
              newLabels1 = np.append(newLabels1, 1)
-             newLabels2 = np.append(newLabels1, 3)
+             newLabels2 = np.append(newLabels2, 3)
         elif(labels[i] == 9):
              newLabels = np.append(newLabels, 0)
              newLabels1 = np.append(newLabels1, 2)
-             newLabels2 = np.append(newLabels1, 3)
+             newLabels2 = np.append(newLabels2, 3)
         elif(labels[i] == 10):
              newLabels = np.append(newLabels, 1)
              newLabels1 = np.append(newLabels1, 2)
-             newLabels2 = np.append(newLabels1, 3)
+             newLabels2 = np.append(newLabels2, 3)
         elif(labels[i] == 11):
              newLabels = np.append(newLabels, 2)
              newLabels1 = np.append(newLabels1, 2)
-             newLabels2 = np.append(newLabels1, 3)
-            # TODO
+             newLabels2 = np.append(newLabels2, 3)
+        elif(labels[i] == 12):
+             newLabels = np.append(newLabels, 0)
+             newLabels1 = np.append(newLabels1, 0)
+             newLabels2 = np.append(newLabels2, 0)
+        elif(labels[i] == 13):
+             newLabels = np.append(newLabels, 1)
+             newLabels1 = np.append(newLabels1, 0)
+             newLabels2 = np.append(newLabels2, 0)
+        elif(labels[i] == 14):
+             newLabels = np.append(newLabels, 2)
+             newLabels1 = np.append(newLabels1, 0)
+             newLabels2 = np.append(newLabels2, 0)
+        elif(labels[i] == 15):
+             newLabels = np.append(newLabels, 0)
+             newLabels1 = np.append(newLabels1, 1)
+             newLabels2 = np.append(newLabels2, 0)
+        elif(labels[i] == 16):
+             newLabels = np.append(newLabels, 1)
+             newLabels1 = np.append(newLabels1, 1)
+             newLabels2 = np.append(newLabels2, 0)
+        elif(labels[i] == 17):
+             newLabels = np.append(newLabels, 2)
+             newLabels1 = np.append(newLabels1, 1)
+             newLabels2 = np.append(newLabels2, 0)
+        elif(labels[i] == 18):
+             newLabels = np.append(newLabels, 0)
+             newLabels1 = np.append(newLabels1, 2)
+             newLabels2 = np.append(newLabels2, 0)
+        elif(labels[i] == 19):
+             newLabels = np.append(newLabels, 1)
+             newLabels1 = np.append(newLabels1, 2)
+             newLabels2 = np.append(newLabels2, 0)
+        elif(labels[i] == 20):
+             newLabels = np.append(newLabels, 2)
+             newLabels1 = np.append(newLabels1, 2)
+             newLabels2 = np.append(newLabels2, 0)
+        elif(labels[i] == 21):
+             newLabels = np.append(newLabels, 0)
+             newLabels1 = np.append(newLabels1, 0)
+             newLabels2 = np.append(newLabels2, 1)
+        elif(labels[i] == 22):
+             newLabels = np.append(newLabels, 1)
+             newLabels1 = np.append(newLabels1, 0)
+             newLabels2 = np.append(newLabels2, 1)
+        elif(labels[i] == 23):
+             newLabels = np.append(newLabels, 2)
+             newLabels1 = np.append(newLabels1, 0)
+             newLabels2 = np.append(newLabels2, 1)
+        elif(labels[i] == 24):
+             newLabels = np.append(newLabels, 0)
+             newLabels1 = np.append(newLabels1, 1)
+             newLabels2 = np.append(newLabels2, 1)
+        elif(labels[i] == 25):
+             newLabels = np.append(newLabels, 1)
+             newLabels1 = np.append(newLabels1, 1)
+             newLabels2 = np.append(newLabels2, 1)
+        elif(labels[i] == 26):
+             newLabels = np.append(newLabels, 2)
+             newLabels1 = np.append(newLabels1, 1)
+             newLabels2 = np.append(newLabels2, 1)
+        elif(labels[i] == 27):
+             newLabels = np.append(newLabels, 0)
+             newLabels1 = np.append(newLabels1, 2)
+             newLabels2 = np.append(newLabels2, 1)
+        elif(labels[i] == 28):
+             newLabels = np.append(newLabels, 1)
+             newLabels1 = np.append(newLabels1, 2)
+             newLabels2 = np.append(newLabels2, 1)
+        elif(labels[i] == 29):
+             newLabels = np.append(newLabels, 2)
+             newLabels1 = np.append(newLabels1, 2)
+             newLabels2 = np.append(newLabels2, 1)
+        elif(labels[i] == 30):
+             newLabels = np.append(newLabels, 0)
+             newLabels1 = np.append(newLabels1, 0)
+             newLabels2 = np.append(newLabels2, 2)
+        elif(labels[i] == 31):
+             newLabels = np.append(newLabels, 1)
+             newLabels1 = np.append(newLabels1, 0)
+             newLabels2 = np.append(newLabels2, 2)
+        elif(labels[i] == 32):
+             newLabels = np.append(newLabels, 2)
+             newLabels1 = np.append(newLabels1, 0)
+             newLabels2 = np.append(newLabels2, 2)
+        elif(labels[i] == 33):
+             newLabels = np.append(newLabels, 0)
+             newLabels1 = np.append(newLabels1, 1)
+             newLabels2 = np.append(newLabels2, 2)
+        elif(labels[i] == 34):
+             newLabels = np.append(newLabels, 1)
+             newLabels1 = np.append(newLabels1, 1)
+             newLabels2 = np.append(newLabels2, 2)
+        elif(labels[i] == 35):
+             newLabels = np.append(newLabels, 2)
+             newLabels1 = np.append(newLabels1, 1)
+             newLabels2 = np.append(newLabels2, 2)
+        elif(labels[i] == 36):
+             newLabels = np.append(newLabels, 0)
+             newLabels1 = np.append(newLabels1, 2)
+             newLabels2 = np.append(newLabels2, 2)
+        elif(labels[i] == 37):
+             newLabels = np.append(newLabels, 1)
+             newLabels1 = np.append(newLabels1, 2)
+             newLabels2 = np.append(newLabels2, 2)
+        else:
+             newLabels = np.append(newLabels, 2)
+             newLabels1 = np.append(newLabels1, 2)
+             newLabels2 = np.append(newLabels2, 2)
     newLabels = np.int_(newLabels)
     newLabels1 = np.int_(newLabels1)
     newLabels2 = np.int_(newLabels2)
     return newLabels, newLabels1, newLabels2
+
+"""
+# Apro il file h5py
+file = h5py.File('39Labels.h5', 'r')
+trainLabels = file['train/labels']
+validLabels = file['valid/labels']
+testLabels = file['test/labels']
+
+newfile = h5py.File('tripleLabels.h5', 'a')
+
+trainLabels, trainLabels1, trainLabels2= toTripleLabels(trainLabels)
+newfile.create_dataset('train/labels/share1', (21060,), dtype='int64', data=trainLabels)
+newfile.create_dataset('train/labels/share2', (21060,), dtype='int64', data=trainLabels1)
+newfile.create_dataset('train/labels/share3', (21060,), dtype='int64', data=trainLabels2)
+validLabels, validLabels1, validLabels2= toTripleLabels(validLabels)
+newfile.create_dataset('valid/labels/share1', (7020,), dtype='int64', data=validLabels)
+newfile.create_dataset('valid/labels/share2', (7020,), dtype='int64', data=validLabels1)
+newfile.create_dataset('valid/labels/share3', (7020,), dtype='int64', data=validLabels2)
+testLabels, testLabels1, testLabels2= toTripleLabels(testLabels)
+newfile.create_dataset('test/labels/share1', (7020,), dtype='int64', data=testLabels)
+newfile.create_dataset('test/labels/share2', (7020,), dtype='int64', data=testLabels1)
+newfile.create_dataset('test/labels/share3', (7020,), dtype='int64', data=testLabels2)
+
+newfile.close()
+file.close()
+"""
 
 
 
