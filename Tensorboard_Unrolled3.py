@@ -165,6 +165,7 @@ class NetMLPUnrolled(nn.Module):
 f = h5py.File('12LabelsNormalized.h5', 'r')
 f1 = h5py.File('39tripleLabels.h5', 'r')
 
+
 Features_test = f['train/features']
 Labels1_test = f1['train/labels/share1']
 Labels2_test = f1['train/labels/share2']
@@ -188,10 +189,10 @@ validDataloader = torch.utils.data.DataLoader(validationSet, batch_size=batch_si
 
 net = NetMLPUnrolled(input_size, hidden_sizes, output_size)
 criterion = nn.CrossEntropyLoss()
-#optimizer1 = optim.Adam(net.share1.parameters(), weight_decay=1e-5) # weight_decay=1e-5
-#optimizer2 = optim.Adam(net.share2.parameters(), weight_decay=1e-5)
-#optimizer3 = optim.Adam(net.share3.parameters(), weight_decay=1e-5)
-optimizer = optim.Adam(net.parameters(), weight_decay=1e-5)
+optimizer1 = optim.Adam(net.share1.parameters(), weight_decay=1e-5) # weight_decay=1e-5
+optimizer2 = optim.Adam(net.share2.parameters(), weight_decay=1e-5)
+optimizer3 = optim.Adam(net.share3.parameters(), weight_decay=1e-5)
+#optimizer = optim.Adam(net.parameters(), weight_decay=1e-5)
 
 # Writer will output to ./runs/ directory by default
 writer = SummaryWriter("runs")
@@ -204,18 +205,22 @@ for epoch in range(100):  # loop over the dataset multiple times
     for i, data in enumerate(trainDataloader, 0):
         inputs, labels1, labels2, labels3 = data
 
-        ### METODO 4
+        ### METODO 2
 
-        optimizer.zero_grad()
         output1, output2, output3 = net(inputs, batch_size_train)
 
+        optimizer1.zero_grad()
         loss1 = criterion(output1, labels1)
-        loss2 = criterion(output2, labels2)
-        loss3 = criterion(output3, labels3)
         loss1.backward(retain_graph=True)
+        optimizer2.zero_grad()
+        loss2 = criterion(output2, labels2)
         loss2.backward(retain_graph=True)
+        optimizer3.zero_grad()
+        loss3 = criterion(output3, labels3)
         loss3.backward()
-        optimizer.step()
+        optimizer1.step()
+        optimizer2.step()
+        optimizer3.step()
 
 
     running_loss_train = 0.0
@@ -412,7 +417,7 @@ for classname, correct_count in correct_pred.items():
 
 """
 
-### METODO 1
+### METODO 1 >= METODO 3
         
         optimizer.zero_grad()
 
@@ -424,7 +429,7 @@ for classname, correct_count in correct_pred.items():
         loss.backward()
         optimizer.step()
         
-### METODO 2
+### METODO 2 <= METODO 3 
 
         output1, output2, output3 = net(inputs, batch_size_train)
 
