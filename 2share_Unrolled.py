@@ -91,7 +91,7 @@ class NetMLPUnrolled(nn.Module):
 
 
 f = h5py.File('12LabelsNormalized.h5', 'r')
-f1 = h5py.File('doubleLabels.h5', 'r')
+f1 = h5py.File('12doubleLabels.h5', 'r')
 
 """
 
@@ -144,7 +144,7 @@ torch.save(net.state_dict(), PATH)
 
 # Salvataggio
 net = NetMLPUnrolled(input_size, hidden_sizes, output_size)
-PATH = './last.pth'
+PATH = './81.34_Unrolled_Metodo1.pth'
 net.load_state_dict(torch.load(PATH))
 
 Features = f['valid/features']
