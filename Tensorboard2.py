@@ -109,7 +109,7 @@ class NetMLPUnrolled(nn.Module):
 
 
 f = h5py.File('12LabelsNormalized.h5', 'r')
-f1 = h5py.File('doubleLabels.h5', 'r')
+f1 = h5py.File('12doubleLabels.h5', 'r')
 
 Features_test = f['train/features']
 Labels1_test = f1['train/labels/share1']

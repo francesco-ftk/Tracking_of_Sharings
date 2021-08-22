@@ -14,31 +14,85 @@ from torch.utils.tensorboard import SummaryWriter
 
 ### DAL PLOT RISULTA CHE L'OVERFIT INIZA FRA LA 20-ESIMA E 40-ESIMA EPOCA
 ### DI ADDESTRAMENTO. L'ACCURATEZZA DEL VALIDSET AUMENTA FINO A STABILIZZARSI
-### VERSO LA 75-EPOCA.
+### VERSO LA 55-EPOCA.
 
 ### 3 METODI DIVERSI
 
 ### RETE CON LA MIGLIORE ACCURATEZZA SUL VALIDSET:
 #    ESEGUO METODO 2 UNROLLED:
 #    - DATASET NORMALIZZATO E 3 Labels per la prima condivisione e 4 per la seconda e la terza Labels
-#    - 142/150 epoche
+#    - 65/80 epoche
 #    - CrossEntropy
 #    - 117 Batch Size per training
 #    - 60 Batch Size per Validation e Test
 #    - 3 livelli nascosti, 531 [256, 128, 32] 3/4
-#    - Adam ---> 49.72% sul valid, 50.09% sul test
-#    50.09_Unrolled3_Metodo2.pth
+#    - Adam con weight_decay=1e-5---> 48.52% sul valid, 50.34% sul test
+#    50.34_Unrolled3_Metodo2.pth
 
-# Accuracy of the network on the 7020 test images: 50.09 %
+# Accuracy of the network on the 7020 test images: 50.34 %
 # Accuracy of the network on the last share: 100.00 %
-# Accuracy of the network on the second-last share: 80.31 %
-# Accuracy of the network on the third-last share: 61.11 %
+# Accuracy of the network on the second-last share: 81.27 %
+# Accuracy of the network on the third-last share: 62.44 %
+
+# Accuracy for class FB is: 90.5 %
+# Accuracy for class FL is: 83.7 %
+# Accuracy for class TW is: 82.3 %
+# Accuracy for class NONE is: 52.2 %
+
+#    50.74_Unrolled3_Metodo2.pth  - epoca 143/150
+
+# Accuracy of the network on the 7020 test images: 50.74 %
+# Accuracy of the network on the last share: 100.00 %
+# Accuracy of the network on the second-last share: 80.70 %
+# Accuracy of the network on the third-last share: 61.81 %
+
+# Accuracy for class FB is: 87.1 %
+# Accuracy for class FL is: 87.6 %
+# Accuracy for class TW is: 78.7 %
+# Accuracy for class NONE is: 56.1 %
+
+#   50.60_Unrolled3_Metodo2.pth - epoca 100/110
+
+# Accuracy of the network on the 7020 test images: 50.60 %
+# Accuracy of the network on the last share: 100.00 %
+# Accuracy of the network on the second-last share: 81.01 %
+# Accuracy of the network on the third-last share: 62.85 %
+
+# Accuracy for class FB is: 89.3 %
+# Accuracy for class FL is: 85.6 %
+# Accuracy for class TW is: 81.5 %
+# Accuracy for class NONE is: 52.9 %
+
+#    ESEGUO METODO 1 UNROLLED:
+#    - DATASET NORMALIZZATO E 3 Labels per la prima condivisione e 4 per la seconda e la terza Labels
+#    - 80/90 epoche
+#    - CrossEntropy
+#    - 117 Batch Size per training
+#    - 60 Batch Size per Validation e Test
+#    - 3 livelli nascosti, 531 [256, 128, 32] 3/4
+#    - Adam con weight_decay=1e-5---> 48.45% sul valid, 50.24% sul test
+#    50.24_Unrolled3_Metodo1.pth
+
+# Accuracy of the network on the 7020 test images: 50.24 %
+# Accuracy of the network on the last share: 100.00 %
+# Accuracy of the network on the second-last share: 81.64 %
+# Accuracy of the network on the third-last share: 62.86 %
+
+# Accuracy for class FB is: 88.0 %
+# Accuracy for class FL is: 86.5 %
+# Accuracy for class TW is: 80.0 %
+# Accuracy for class NONE is: 58.7 %
 
 
-# Accuracy for class FB is: 88.7 %
-# Accuracy for class FL is: 89.7 %
-# Accuracy for class TW is: 77.7 %
-# Accuracy for class NONE is: 47.3 %
+#    ESEGUO METODO 3 UNROLLED:
+#    - DATASET NORMALIZZATO E 3 Labels per la prima condivisione e 4 per la seconda e la terza Labels
+#    - 65/90 epoche
+#    - CrossEntropy
+#    - 117 Batch Size per training
+#    - 60 Batch Size per Validation e Test
+#    - 3 livelli nascosti, 531 [256, 128, 32] 3/4
+#    - Adam con weight_decay=1e-5---> 48.30% sul valid, 49.83% sul test
+#    49.83_Unrolled3_Metodo3.pth
 
 
 batch_size_train = 117
@@ -109,7 +163,7 @@ class NetMLPUnrolled(nn.Module):
 
 
 f = h5py.File('12LabelsNormalized.h5', 'r')
-f1 = h5py.File('tripleLabels.h5', 'r')
+f1 = h5py.File('39tripleLabels.h5', 'r')
 
 """
 
@@ -136,34 +190,21 @@ validDataloader = torch.utils.data.DataLoader(validationSet, batch_size=batch_si
 
 net = NetMLPUnrolled(input_size, hidden_sizes, output_size)
 criterion = nn.CrossEntropyLoss()
-optimizer1 = optim.Adam(net.share1.parameters())
-# weight_decay=1e-5
-optimizer2 = optim.Adam(net.share2.parameters())
-optimizer3 = optim.Adam(net.share3.parameters())
+optimizer1 = optim.Adam(net.share1.parameters(), weight_decay=1e-5) # weight_decay=1e-5
+optimizer2 = optim.Adam(net.share2.parameters(), weight_decay=1e-5)
+optimizer3 = optim.Adam(net.share3.parameters(), weight_decay=1e-5)
+#optimizer = optim.Adam(net.parameters(), weight_decay=1e-5)
 
 # Writer will output to ./runs/ directory by default
-writer = SummaryWriter("runs2")
+writer = SummaryWriter("runs")
 max = 0
 
-for epoch in range(150):  # loop over the dataset multiple times
+for epoch in range(110):  # loop over the dataset multiple times
 
     print('Running Epoch: ', epoch)
 
     for i, data in enumerate(trainDataloader, 0):
         inputs, labels1, labels2, labels3 = data
-
-
-        ### METODO 1
-        
-        optimizer.zero_grad()
-
-        output1, output2, output3 = net(inputs, batch_size_train)
-        loss1 = criterion(output1, labels1)
-        loss2 = criterion(output2, labels2)
-        loss3 = criterion(output3, labels3)
-        loss = loss1 + loss2 + loss3
-        loss.backward()
-        optimizer.step()
 
         ### METODO 2
 
@@ -181,26 +222,6 @@ for epoch in range(150):  # loop over the dataset multiple times
         optimizer1.step()
         optimizer2.step()
         optimizer3.step()
-
-
-        ### METODO 3
-
-        optimizer1.zero_grad()
-        optimizer2.zero_grad()
-        optimizer3.zero_grad()
-
-        output1, output2 = net(inputs, batch_size_train)
-        loss1 = criterion(output1, labels1)
-        loss2 = criterion(output2, labels2)
-        loss3 = criterion(output3, labels3)
-        loss = loss1 + loss2 + loss3
-        loss.backward()
-
-        optimizer1.step()
-        optimizer2.step() 
-        optimizer3.step() 
-        
-
 
 
     running_loss_train = 0.0
@@ -393,3 +414,53 @@ for classname, correct_count in correct_pred.items():
     print("Accuracy for class {:2s} is: {:.1f} %".format(classname,
                                                          accuracy))
 
+
+"""
+
+### METODO 1
+        
+        optimizer.zero_grad()
+
+        output1, output2, output3 = net(inputs, batch_size_train)
+        loss1 = criterion(output1, labels1)
+        loss2 = criterion(output2, labels2)
+        loss3 = criterion(output3, labels3)
+        loss = loss1 + loss2 + loss3
+        loss.backward()
+        optimizer.step()
+        
+### METODO 2
+
+        output1, output2, output3 = net(inputs, batch_size_train)
+
+        optimizer1.zero_grad()
+        loss1 = criterion(output1, labels1)
+        loss1.backward(retain_graph=True)
+        optimizer2.zero_grad()
+        loss2 = criterion(output2, labels2)
+        loss2.backward(retain_graph=True)
+        optimizer3.zero_grad()
+        loss3 = criterion(output3, labels3)
+        loss3.backward()
+        optimizer1.step()
+        optimizer2.step()
+        optimizer3.step()
+        
+### METODO 3
+
+        optimizer1.zero_grad()
+        optimizer2.zero_grad()
+        optimizer3.zero_grad()
+
+        output1, output2, output3 = net(inputs, batch_size_train)
+        loss1 = criterion(output1, labels1)
+        loss2 = criterion(output2, labels2)
+        loss3 = criterion(output3, labels3)
+        loss = loss1 + loss2 + loss3
+        loss.backward()
+
+        optimizer1.step()
+        optimizer2.step()
+        optimizer3.step()
+
+"""
