@@ -126,8 +126,6 @@ for epoch in range(90):  # loop over the dataset multiple times
     for i, data in enumerate(trainDataloader, 0):
         inputs, labels1, labels2 = data
 
-        ### METODO 1
-
         # zero the parameter gradients
         optimizer.zero_grad()
 
@@ -202,18 +200,3 @@ print("Max Accuracy in validtest: ", max)
 print('Finished')
 
 # DA TERMINALE IN BASSO -> tensorboard --logdir=runs
-
-
-
-"""
- ### METODO STRANO
-
-        optimizer.zero_grad()
-
-        output1, output2 = net(inputs, batch_size_train)
-        loss1 = criterion(output1, labels1)
-        loss2 = criterion(output2, labels2)
-        loss1.backward(retain_graph=True)
-        loss2.backward()
-        optimizer.step()
-"""
