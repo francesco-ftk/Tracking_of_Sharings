@@ -24,7 +24,7 @@ from torch.utils.tensorboard import SummaryWriter
 #    - 60 Batch Size per Validation e Test
 #    - 3 livelli nascosti, 531 [256, 128, 32] 3/4
 #    - Adam ---> 80.75% sul valid, 81.34% sul test
-#    81.34_Unrolled.pth
+#    81.34_Unrolled2.pth
 
 
 batch_size_train = 117
