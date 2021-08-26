@@ -493,32 +493,23 @@ newfile.close()
 file.close()
 """
 
+"""
 import torch
-shape = (117,3,1)
+
+y=[]
+print(y)
+x = torch.empty((0,117,3))
+shape = (117,3)
 zeros_tensor = torch.zeros(shape)
-shape1 = (117,3)
-ones_tensor = torch.ones(shape1)
-print(zeros_tensor.shape)
-print(ones_tensor.shape)
-
-new_inps = torch.cat((zeros_tensor, ones_tensor.unsqueeze(2)), dim=-1)
-print(new_inps.shape)  # [64, 161, 2]
-print(new_inps)
-
-# TODO
-
-"""
-import torch
-
-# create two sample vectors
-inps = torch.randn([64, 161, 1])
-d = torch.randn([64, 161])
-
-# bring d into the same format, and then concatenate tensors
-new_inps = torch.cat((inps, d.unsqueeze(2)), dim=-1)
-print(new_inps.shape)  # [64, 161, 2]
+ones_tensor = torch.ones(shape)
+y.append(zeros_tensor)
+y.append(ones_tensor)
+print(y)
+m = y[0]
+print("\n m: " , m)
 """
 
-
+for i in range(3):
+    print(i)
 
 
