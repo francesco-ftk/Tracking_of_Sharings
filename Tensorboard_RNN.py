@@ -11,7 +11,6 @@ from torch.utils.tensorboard import SummaryWriter
 ######################################################################################
 ### ESEGUO RETE RNN  PER TRE PREDIZIONI PER FARE PLOT DI ACCURACY E LOSS
 ### SUL TRAINSET E VALIDSET PER 150 EPOCHE DI ADDESTRAMENTO.
-
 ### DAL PLOT RISULTA CHE L'OVERFIT INIZA FRA LA 35-ESIMA E 55-ESIMA EPOCA
 ### DI ADDESTRAMENTO. L'ACCURATEZZA DEL VALIDSET AUMENTA FINO A STABILIZZARSI
 ### VERSO LA 75-EPOCA.
@@ -19,7 +18,7 @@ from torch.utils.tensorboard import SummaryWriter
 ### RETE CON LA MIGLIORE ACCURATEZZA SUL VALIDSET:
 #    ESEGUO RETE RNN:
 #    - DATASET NORMALIZZATO E 3 Labels per la prima condivisione e 4 labels per la seconda e la terza
-#    - 80/100 epoche
+#    - 89/100 epoche
 #    - CrossEntropy
 #    - 117 Batch Size per training
 #    - 60 Batch Size per Validation e Test
@@ -37,6 +36,28 @@ from torch.utils.tensorboard import SummaryWriter
 # Accuracy for class TW is: 78.8 %
 # Accuracy for class NONE is: 59.9 %
 
+# Overfit parte fra a 20-esima e 50-esima epoca
+
+### RETE CON LA MIGLIORE ACCURATEZZA SUL VALIDSET:
+#    ESEGUO RETE RNN:
+#    - DATASET DI 2 FEATURES NORMALIZZATO E 3 Labels per la prima condivisione e 4 labels per la seconda e la terza
+#    - su 100 epoche
+#    - CrossEntropy
+#    - 117 Batch Size per training
+#    - 60 Batch Size per Validation e Test
+#    - 3 livelli nascosti, 521 [256, 128, 32] 3/4
+#    - Adam con weight_decay=1e-5---> 31.87% sul valid, 33.39% sul test
+#    33.39_RNN2.pth
+
+# Accuracy of the network on the 7020 test images: 33.39 %
+# Accuracy of the network on the last share: 92.93 %
+# Accuracy of the network on the second-last share: 68.22 %
+# Accuracy of the network on the third-last share: 52.02 %
+
+# Accuracy for class FB is: 68.3 %
+# Accuracy for class FL is: 79.0 %
+# Accuracy for class TW is: 75.0 %
+# Accuracy for class NONE is: 50.3 %
 
 
 batch_size_train = 117
@@ -69,7 +90,7 @@ class CustomDataset(Dataset):
         return image, labels1, labels2, labels3
 
 
-input_size = 531
+input_size = 521  # 531
 hidden_sizes = [256, 128, 32]
 output_size = 3
 
@@ -123,7 +144,7 @@ class NetRNN(nn.Module):
             y = F.relu(self.fl1(y))
             y = F.relu(self.fl2(y))
             latent = F.relu(self.fl3(y))
-            if i==0:
+            if i == 0:
                 y = self.fl4(latent)
             else:
                 y = self.fl5(latent)
@@ -131,8 +152,11 @@ class NetRNN(nn.Module):
         return share[0], share[1], share[2]
 
 
-f = h5py.File('12LabelsNormalized.h5', 'r')
+#f = h5py.File('12LabelsNormalized.h5', 'r')
+f = h5py.File('2FeaturesNormalized.h5', 'r')
 f1 = h5py.File('39tripleLabels.h5', 'r')
+
+"""
 
 Features_test = f['train/features']
 Labels1_test = f1['train/labels/share1']
@@ -164,7 +188,7 @@ optimizer = optim.Adam(net.parameters(), weight_decay=1e-5)
 writer = SummaryWriter("runs")
 max = 0
 
-for epoch in range(100):  # loop over the dataset multiple times
+for epoch in range(150):
 
     print('Running Epoch: ', epoch)
 
@@ -254,7 +278,7 @@ print('Finished')
 """
 # Salvataggio
 net = NetRNN(input_size, hidden_sizes, output_size)
-PATH = './50.66_RNN.pth'
+PATH = './last.pth'
 net.load_state_dict(torch.load(PATH))
 
 Features = f['valid/features']
@@ -371,5 +395,3 @@ for classname, correct_count in correct_pred.items():
     accuracy = 100 * float(correct_count) / total_pred[classname]
     print("Accuracy for class {:2s} is: {:.1f} %".format(classname,
                                                          accuracy))
-
-"""

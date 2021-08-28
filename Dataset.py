@@ -5,7 +5,7 @@ import numpy as np
 # TrainSet di 21060 immagini, 39 etichette possibili, per ognuna abbiamo 369 dct, 10 header e 152 meta, ossia 532 features
 
 ######################################################################################
- ### CODICE PER CREARE UN DATASET CON FEATURES NORMALIZZATE E 3 o 12 LABELS ###
+ ### CODICE PER CREARE UN DATASET CON 3 FEATURES NORMALIZZATE E 3 o 12 LABELS ###
 
 def setInput(numberOfData, dct, header, meta):
     row = np.concatenate((dct[0], header[0], meta[0]), axis=0)
@@ -509,7 +509,88 @@ m = y[0]
 print("\n m: " , m)
 """
 
-for i in range(3):
-    print(i)
+######################################################################################
+ ### CODICE PER CREARE UN DATASET CON 2 FEATURES NORMALIZZATE ###
+
+def setInput2(numberOfData, dct, meta):
+    row = np.concatenate((dct[0], meta[0]), axis=0)
+    row1 = np.concatenate((dct[1], meta[1]), axis=0)
+    input = np.vstack((row, row1))
+    for i in range(2, numberOfData, 1):
+        row = np.concatenate((dct[i], meta[i]), axis=0)
+        input = np.vstack((input, row))
+        if i%351 == 0:
+            print(i)
+    return input
+
+def Normalize2(file, newfile):
+
+    dctTrain = file['train/features/dct']
+    metaTrain = file['train/features/meta']
+
+    dctValid = file['valid/features/dct']
+    metaValid = file['valid/features/meta']
+
+    dctTest = file['test/features/dct']
+    metaTest = file['test/features/meta']
+
+    newDCTtrain= np.zeros((21060,369))
+    newDCTvalid= np.zeros((7020,369))
+    newDCTtest= np.zeros((7020,369))
+
+    newMETAtrain= np.zeros((21060,152))
+    newMETAvalid= np.zeros((7020,152))
+    newMETAtest= np.zeros((7020,152))
 
 
+    for i in range(dctTrain.shape[1]):
+        colTrain = dctTrain[:,i]
+        colValid = dctValid[:,i]
+        colTest = dctTest[:,i]
+        max = np.amax(colTrain)
+        min = np.amin(colTrain)
+        den= max-min
+        if den < np.finfo(float).eps:
+            den = np.finfo(float).eps
+        colTrain = (colTrain-min)/den
+        colValid = (colValid-min)/den
+        colTest = (colTest-min)/den
+        newDCTtrain[:,i] = colTrain
+        newDCTvalid[:,i] = colValid
+        newDCTtest[:,i] = colTest
+
+    for i in range(metaTrain.shape[1]):
+        colTrain = metaTrain[:,i]
+        colValid = metaValid[:,i]
+        colTest = metaTest[:,i]
+        max = np.amax(colTrain)
+        min = np.amin(colTrain)
+        den= max-min
+        if den < np.finfo(float).eps:
+            den = np.finfo(float).eps
+        colTrain = (colTrain-min)/den
+        colValid = (colValid-min)/den
+        colTest = (colTest-min)/den
+        newMETAtrain[:,i] = colTrain
+        newMETAvalid[:,i] = colValid
+        newMETAtest[:,i] = colTest
+
+    trainSet = setInput2(21060, newDCTtrain, newMETAtrain)
+    newfile.create_dataset('train/features', (21060,521), dtype='float32', data=trainSet)
+    validSet = setInput2(7020, newDCTvalid, newMETAvalid)
+    newfile.create_dataset('valid/features', (7020,521), dtype='float32', data=validSet)
+    testSet = setInput2(7020, newDCTtest, newMETAtest)
+    newfile.create_dataset('test/features', (7020,521), dtype='float32', data=testSet)
+
+"""
+
+# Apro il file h5py
+file = h5py.File('dataset.h5', 'r')
+newfile = h5py.File('2FeaturesNormalized.h5', 'a')
+
+Normalize2(file, newfile)
+
+file.close()
+newfile.close()
+
+"""
