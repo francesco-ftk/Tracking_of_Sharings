@@ -41,23 +41,23 @@ from torch.utils.tensorboard import SummaryWriter
 ### RETE CON LA MIGLIORE ACCURATEZZA SUL VALIDSET:
 #    ESEGUO RETE RNN:
 #    - DATASET DI 2 FEATURES NORMALIZZATO E 3 Labels per la prima condivisione e 4 labels per la seconda e la terza
-#    - su 100 epoche
+#    - 99/120 epoche
 #    - CrossEntropy
 #    - 117 Batch Size per training
 #    - 60 Batch Size per Validation e Test
 #    - 3 livelli nascosti, 521 [256, 128, 32] 3/4
-#    - Adam con weight_decay=1e-5---> 31.87% sul valid, 33.39% sul test
-#    33.39_RNN2.pth
+#    - Adam con weight_decay=1e-5---> 32.31% sul valid, 34.30% sul test
+#    34.30_RNN2.pth
 
-# Accuracy of the network on the 7020 test images: 33.39 %
-# Accuracy of the network on the last share: 92.93 %
-# Accuracy of the network on the second-last share: 68.22 %
-# Accuracy of the network on the third-last share: 52.02 %
+# Accuracy of the network on the 7020 test images: 34.30 %
+# Accuracy of the network on the last share: 92.91 %
+# Accuracy of the network on the second-last share: 67.54 %
+# Accuracy of the network on the third-last share: 51.81 %
 
-# Accuracy for class FB is: 68.3 %
-# Accuracy for class FL is: 79.0 %
-# Accuracy for class TW is: 75.0 %
-# Accuracy for class NONE is: 50.3 %
+# Accuracy for class FB is: 64.3 %
+# Accuracy for class FL is: 84.6 %
+# Accuracy for class TW is: 73.3 %
+# Accuracy for class NONE is: 48.0 %
 
 
 batch_size_train = 117
@@ -188,7 +188,7 @@ optimizer = optim.Adam(net.parameters(), weight_decay=1e-5)
 writer = SummaryWriter("runs")
 max = 0
 
-for epoch in range(150):
+for epoch in range(120):
 
     print('Running Epoch: ', epoch)
 
@@ -395,3 +395,5 @@ for classname, correct_count in correct_pred.items():
     accuracy = 100 * float(correct_count) / total_pred[classname]
     print("Accuracy for class {:2s} is: {:.1f} %".format(classname,
                                                          accuracy))
+
+
