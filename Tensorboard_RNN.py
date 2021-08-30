@@ -325,7 +325,7 @@ Labels2 = f1['test/labels/share2']
 Labels3 = f1['test/labels/share3']
 
 testSet = CustomDataset(Features, Labels1, Labels2, Labels3)
-testDataloader = torch.utils.data.DataLoader(testSet, batch_size=60, shuffle=False)
+testDataloader = torch.utils.data.DataLoader(testSet, batch_size=batch_size_valid_and_test, shuffle=False)
 
 first_share = 0
 second_share = 0
