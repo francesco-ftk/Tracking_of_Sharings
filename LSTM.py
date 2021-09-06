@@ -9,33 +9,33 @@ from torch.utils.data import Dataset
 from torch.utils.tensorboard import SummaryWriter
 
 ######################################################################################
-### ESEGUO METODO UNROLLED PER TRE PREDIZIONI PER FARE PLOT DI ACCURACY E LOSS
-### SUL TRAINSET E VALIDSET PER 150 EPOCHE DI ADDESTRAMENTO.
-### DAL PLOT RISULTA CHE L'OVERFIT INIZA FRA LA 20-ESIMA E 40-ESIMA EPOCA
+### ESEGUO METODO LSTM PER TRE PREDIZIONI PER FARE PLOT DI ACCURACY E LOSS
+### SUL TRAINSET E VALIDSET PER 100 EPOCHE DI ADDESTRAMENTO.
+### DAL PLOT RISULTA CHE L'OVERFIT INIZA FRA LA 10-ESIMA E 50-ESIMA EPOCA
 ### DI ADDESTRAMENTO. L'ACCURATEZZA DEL VALIDSET AUMENTA FINO A STABILIZZARSI
-### VERSO LA 55-EPOCA.
+### VERSO LA 75-EPOCA.
 
 ### RETE CON LA MIGLIORE ACCURATEZZA SUL VALIDSET:
-#    ESEGUO METODO UNROLLED:
+#    ESEGUO METODO LSTM:
 #    - DATASET NORMALIZZATO E 3 Labels per la prima condivisione e 4 per la seconda e la terza Labels
-#    - 80/90 epoche
+#    - 98/100 epoche
 #    - CrossEntropy
 #    - 117 Batch Size per training
 #    - 60 Batch Size per Validation e Test
-#    - 3 livelli nascosti, 531 [256, 128, 32] 3/4
-#    - Adam con weight_decay=1e-5---> 48.45% sul valid, 50.24% sul test
-#    50.24_Unrolled3.pth
+#    - 1 livello nascosto, 531 [267] 3/4
+#    - Adam con weight_decay=1e-5---> 49.52% sul valid, 50.58% sul test
+#    50.58_LSTM.pth
 
-# Accuracy of the network on the 7020 test images: 50.24 %
+# Accuracy of the network on the 7020 test images: 50.58 %
 # Accuracy of the network on the last share: 100.00 %
-# Accuracy of the network on the second-last share: 81.64 %
-# Accuracy of the network on the third-last share: 62.86 %
+# Accuracy of the network on the second-last share: 81.11 %
+# Accuracy of the network on the third-last share: 62.26 %
 
-# Accuracy for class FB is: 88.0 %
+
+# Accuracy for class FB is: 89.1 %
 # Accuracy for class FL is: 86.5 %
-# Accuracy for class TW is: 80.0 %
-# Accuracy for class NONE is: 58.7 %
-
+# Accuracy for class TW is: 78.9 %
+# Accuracy for class NONE is: 55.8 %
 
 batch_size_train = 117
 batch_size_valid_and_test = 60
@@ -68,44 +68,42 @@ class CustomDataset(Dataset):
 
 
 input_size = 531
-hidden_sizes = [256, 128, 32]
 output_size = 3
+n_layers = 1
+seq_len = 1
+hidden_sizes = 267
 
-
-class NetMLPLatent(nn.Module):
-    def __init__(self, input_size, hidden_sizes, output_size):
+class RNN_LSTM(nn.Module):
+    def __init__(self, input_size, hidden_sizes, output_size, n_layers, seq_len):
         super().__init__()
-        self.latent_size = hidden_sizes[2]
-        self.fl1 = nn.Linear(input_size + self.latent_size, hidden_sizes[0])
-        self.fl2 = nn.Linear(hidden_sizes[0], hidden_sizes[1])
-        self.fl3 = nn.Linear(hidden_sizes[1], hidden_sizes[2])
-        self.fl4 = nn.Linear(hidden_sizes[2], output_size)
-
-    def forward(self, x, h):
-        x = torch.cat((x, h), 1)  # Concatenates the h tensor to input x.
-        x = F.relu(self.fl1(x))
-        x = F.relu(self.fl2(x))
-        latent = F.relu(self.fl3(x))
-        x = self.fl4(latent)
-        return x, latent
-
-
-class NetMLPUnrolled(nn.Module):
-    def __init__(self, input_size, hidden_sizes, output_size):
-        super().__init__()
-        self.share1 = NetMLPLatent(input_size, hidden_sizes, output_size)
-        self.share2 = NetMLPLatent(input_size, hidden_sizes, output_size + 1)
-        self.share3 = NetMLPLatent(input_size, hidden_sizes, output_size + 1)
+        self.input_size = input_size
+        self.latent_size = hidden_sizes
+        self.seq_len = seq_len
+        self.n_layers= n_layers
+        self.lstm = nn.LSTM(self.input_size, self.latent_size, self.n_layers, batch_first=True)
+        self.fl1 = nn.Linear(self.latent_size, output_size)
+        self.fl2 = nn.Linear(self.latent_size, output_size+1)
 
     def forward(self, x, batch_size):
-        share1, latent = self.share1(x, torch.zeros([batch_size, self.share1.latent_size]))
-        share2, latent = self.share2(x, latent)
-        share3, _ = self.share2(x, latent)
-        return share1, share2, share3
+        hidden_state = torch.zeros(self.n_layers, batch_size, self.latent_size)
+        cell_state = torch.zeros(self.n_layers, batch_size, self.latent_size)
+        hidden = (hidden_state, cell_state)
+        x = x.reshape([batch_size, self.seq_len, self.input_size])
+        share = []
+        for i in range(3):
+            y, hidden = self.lstm(x,hidden)
+            if i == 0:
+                y = self.fl1(hidden[0])
+            else:
+                y = self.fl2(hidden[0])
+            share.append(y)
+        return share[0], share[1], share[2]
 
 
 f = h5py.File('12LabelsNormalized.h5', 'r')
 f1 = h5py.File('39tripleLabels.h5', 'r')
+
+"""
 
 Features_test = f['train/features']
 Labels1_test = f1['train/labels/share1']
@@ -128,17 +126,15 @@ Labels3 = f1['valid/labels/share3']
 validationSet = CustomDataset(Features, Labels1, Labels2, Labels3)
 validDataloader = torch.utils.data.DataLoader(validationSet, batch_size=batch_size_valid_and_test, shuffle=False)
 
-net = NetMLPUnrolled(input_size, hidden_sizes, output_size)
+net = RNN_LSTM(input_size, hidden_sizes, output_size, n_layers, seq_len)
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(net.parameters(), weight_decay=1e-5)
 
-"""
 # Writer will output to ./runs/ directory by default
 writer = SummaryWriter("runs")
 max = 0
-"""
 
-for epoch in range(100):  # loop over the dataset multiple times
+for epoch in range(100):
 
     print('Running Epoch: ', epoch)
 
@@ -148,8 +144,9 @@ for epoch in range(100):  # loop over the dataset multiple times
         optimizer.zero_grad()
 
         output1, output2, output3 = net(inputs, batch_size_train)
-        print("output1= ", output1.shape)
-        print("labels1 =", labels1.shape)
+        output1= output1.reshape(([batch_size_train,3]))
+        output2= output2.reshape(([batch_size_train,4]))
+        output3= output3.reshape(([batch_size_train,4]))
         loss1 = criterion(output1, labels1)
         loss2 = criterion(output2, labels2)
         loss3 = criterion(output3, labels3)
@@ -157,7 +154,6 @@ for epoch in range(100):  # loop over the dataset multiple times
         loss.backward()
         optimizer.step()
 
-"""
     running_loss_train = 0.0
     correct = 0
     total = 0
@@ -166,7 +162,9 @@ for epoch in range(100):  # loop over the dataset multiple times
         for data in trainDataloader1:
             images, labels1, labels2, labels3 = data
             output1, output2, output3 = net(images, batch_size_train)
-
+            output1= output1.reshape(([batch_size_train,3]))
+            output2= output2.reshape(([batch_size_train,4]))
+            output3= output3.reshape(([batch_size_train,4]))
             # Running_Loss_Train
             loss1 = criterion(output1, labels1)
             loss2 = criterion(output2, labels2)
@@ -193,6 +191,9 @@ for epoch in range(100):  # loop over the dataset multiple times
         for data in validDataloader:
             images, labels1, labels2, labels3 = data
             output1, output2, output3 = net(images, batch_size_valid_and_test)
+            output1= output1.reshape(([batch_size_valid_and_test,3]))
+            output2= output2.reshape(([batch_size_valid_and_test,4]))
+            output3= output3.reshape(([batch_size_valid_and_test,4]))
 
             # Running_Loss_Valid
             loss1 = criterion(output1, labels1)
@@ -226,10 +227,11 @@ print("Max Accuracy in validtest: ", max)
 print('Finished')
 
 # DA TERMINALE IN BASSO -> tensorboard --logdir=runs
+"""
 
 # Salvataggio
-net = NetMLPUnrolled(input_size, hidden_sizes, output_size)
-PATH = './50.24_Unrolled3.pth'
+net = RNN_LSTM(input_size, hidden_sizes, output_size, n_layers, seq_len)
+PATH = './50.58_LSTM.pth'
 net.load_state_dict(torch.load(PATH))
 
 Features = f['valid/features']
@@ -250,6 +252,9 @@ with torch.no_grad():
     for data in validDataloader:
         images, labels1, labels2, labels3 = data
         output1, output2, output3 = net(images, batch_size_valid_and_test)
+        output1= output1.reshape(([batch_size_valid_and_test,3]))
+        output2= output2.reshape(([batch_size_valid_and_test,4]))
+        output3= output3.reshape(([batch_size_valid_and_test,4]))
         # the class with the highest energy is what we choose as prediction
         _, predicted1 = torch.max(output1.data, 1)
         _, predicted2 = torch.max(output2.data, 1)
@@ -276,7 +281,7 @@ Labels2 = f1['test/labels/share2']
 Labels3 = f1['test/labels/share3']
 
 testSet = CustomDataset(Features, Labels1, Labels2, Labels3)
-testDataloader = torch.utils.data.DataLoader(testSet, batch_size=60, shuffle=False)
+testDataloader = torch.utils.data.DataLoader(testSet, batch_size=batch_size_valid_and_test, shuffle=False)
 
 first_share = 0
 second_share = 0
@@ -288,6 +293,9 @@ with torch.no_grad():
     for data in testDataloader:
         images, labels1, labels2, labels3 = data
         output1, output2, output3 = net(images, batch_size_valid_and_test)
+        output1= output1.reshape(([batch_size_valid_and_test,3]))
+        output2= output2.reshape(([batch_size_valid_and_test,4]))
+        output3= output3.reshape(([batch_size_valid_and_test,4]))
         # the class with the highest energy is what we choose as prediction
         _, predicted1 = torch.max(output1.data, 1)
         _, predicted2 = torch.max(output2.data, 1)
@@ -322,6 +330,9 @@ with torch.no_grad():
     for data in testDataloader:
         images, labels1, labels2, labels3 = data
         output1, output2, output3 = net(images, batch_size_valid_and_test)
+        output1= output1.reshape(([batch_size_valid_and_test,3]))
+        output2= output2.reshape(([batch_size_valid_and_test,4]))
+        output3= output3.reshape(([batch_size_valid_and_test,4]))
         _, predicted1 = torch.max(output1.data, 1)
         _, predicted2 = torch.max(output2.data, 1)
         _, predicted3 = torch.max(output3.data, 1)
@@ -348,4 +359,3 @@ for classname, correct_count in correct_pred.items():
                                                          accuracy))
 
 
-"""
