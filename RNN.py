@@ -9,33 +9,32 @@ from torch.utils.data import Dataset
 from torch.utils.tensorboard import SummaryWriter
 
 ######################################################################################
-### ESEGUO METODO LSTM PER TRE PREDIZIONI PER FARE PLOT DI ACCURACY E LOSS
-### SUL TRAINSET E VALIDSET PER 100 EPOCHE DI ADDESTRAMENTO.
-### DAL PLOT RISULTA CHE L'OVERFIT INIZA FRA LA 10-ESIMA E 50-ESIMA EPOCA
+### ESEGUO RETE RNN  PER TRE PREDIZIONI PER FARE PLOT DI ACCURACY E LOSS
+### SUL TRAINSET E VALIDSET PER 150 EPOCHE DI ADDESTRAMENTO.
+### DAL PLOT RISULTA CHE L'OVERFIT INIZA FRA LA 15-ESIMA E 45-ESIMA EPOCA
 ### DI ADDESTRAMENTO. L'ACCURATEZZA DEL VALIDSET AUMENTA FINO A STABILIZZARSI
-### VERSO LA 75-EPOCA.
+### VERSO LA 55-EPOCA.
 
 ### RETE CON LA MIGLIORE ACCURATEZZA SUL VALIDSET:
-#    ESEGUO METODO LSTM:
-#    - DATASET NORMALIZZATO E 3 Labels per la prima condivisione e 4 per la seconda e la terza Labels
-#    - 98/100 epoche
+#    ESEGUO RETE RNN:
+#    - DATASET NORMALIZZATO E 3 Labels per la prima condivisione e 4 labels per la seconda e la terza
+#    - 67/70 epoche
 #    - CrossEntropy
 #    - 117 Batch Size per training
 #    - 60 Batch Size per Validation e Test
 #    - 1 livello nascosto, 531 [267] 3/4
-#    - Adam con weight_decay=1e-5---> 49.52% sul valid, 50.58% sul test
-#    50.58_LSTM.pth
+#    - Adam con weight_decay=1e-5---> 48.39% sul valid, 51.01% sul test
+#    51.01_RNN.pth
 
-# Accuracy of the network on the 7020 test images: 50.58 %
+# Accuracy of the network on the 7020 test images: 51.01 %
 # Accuracy of the network on the last share: 100.00 %
-# Accuracy of the network on the second-last share: 81.11 %
-# Accuracy of the network on the third-last share: 62.26 %
+# Accuracy of the network on the second-last share: 81.20 %
+# Accuracy of the network on the third-last share: 63.23 %
 
-
-# Accuracy for class FB is: 89.1 %
-# Accuracy for class FL is: 86.5 %
-# Accuracy for class TW is: 78.9 %
-# Accuracy for class NONE is: 55.8 %
+# Accuracy for class FB is: 91.4 %
+# Accuracy for class FL is: 85.2 %
+# Accuracy for class TW is: 80.4 %
+# Accuracy for class NONE is: 52.8 %
 
 batch_size_train = 117
 batch_size_valid_and_test = 60
@@ -68,34 +67,27 @@ class CustomDataset(Dataset):
 
 
 input_size = 531
-output_size = 3
-n_layers = 1
-seq_len = 1
 hidden_sizes = 267
+output_size = 3
 
-class RNN_LSTM(nn.Module):
-    def __init__(self, input_size, hidden_sizes, output_size, n_layers, seq_len):
+class NetRNN(nn.Module):
+    def __init__(self, input_size, hidden_sizes, output_size):
         super().__init__()
-        self.input_size = input_size
         self.latent_size = hidden_sizes
-        self.seq_len = seq_len
-        self.n_layers= n_layers
-        self.lstm = nn.LSTM(self.input_size, self.latent_size, self.n_layers, batch_first=True)
-        self.fl1 = nn.Linear(self.latent_size, output_size)
-        self.fl2 = nn.Linear(self.latent_size, output_size+1)
+        self.fl1 = nn.Linear(input_size + self.latent_size, hidden_sizes)
+        self.fl2 = nn.Linear(hidden_sizes, output_size)
+        self.fl3 = nn.Linear(hidden_sizes, output_size+1)
 
     def forward(self, x, batch_size):
-        hidden_state = torch.zeros(self.n_layers, batch_size, self.latent_size)
-        cell_state = torch.zeros(self.n_layers, batch_size, self.latent_size)
-        hidden = (hidden_state, cell_state)
-        x = x.reshape([batch_size, self.seq_len, self.input_size])
+        latent = torch.zeros([batch_size, self.latent_size])
         share = []
         for i in range(3):
-            y, hidden = self.lstm(x,hidden)
+            y = torch.cat((x, latent), 1)
+            latent = F.relu(self.fl1(y))
             if i == 0:
-                y = self.fl1(hidden[0])
+                y = self.fl2(latent)
             else:
-                y = self.fl2(hidden[0])
+                y = self.fl3(latent)
             share.append(y)
         return share[0], share[1], share[2]
 
@@ -124,7 +116,8 @@ Labels3 = f1['valid/labels/share3']
 validationSet = CustomDataset(Features, Labels1, Labels2, Labels3)
 validDataloader = torch.utils.data.DataLoader(validationSet, batch_size=batch_size_valid_and_test, shuffle=False)
 
-net = RNN_LSTM(input_size, hidden_sizes, output_size, n_layers, seq_len)
+net = NetRNN(input_size, hidden_sizes, output_size)
+#net = NetMLPRNN(input_size, hidden_sizes, output_size)
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(net.parameters(), weight_decay=1e-5)
 
@@ -132,7 +125,7 @@ optimizer = optim.Adam(net.parameters(), weight_decay=1e-5)
 writer = SummaryWriter("runs")
 max = 0
 
-for epoch in range(70):
+for epoch in range(60):
 
     print('Running Epoch: ', epoch)
 
@@ -142,15 +135,13 @@ for epoch in range(70):
         optimizer.zero_grad()
 
         output1, output2, output3 = net(inputs, batch_size_train)
-        output1= output1.reshape(([batch_size_train,3]))
-        output2= output2.reshape(([batch_size_train,4]))
-        output3= output3.reshape(([batch_size_train,4]))
         loss1 = criterion(output1, labels1)
         loss2 = criterion(output2, labels2)
         loss3 = criterion(output3, labels3)
         loss = loss1 + loss2 + loss3
         loss.backward()
         optimizer.step()
+
 
     running_loss_train = 0.0
     correct = 0
@@ -160,9 +151,7 @@ for epoch in range(70):
         for data in trainDataloader1:
             images, labels1, labels2, labels3 = data
             output1, output2, output3 = net(images, batch_size_train)
-            output1= output1.reshape(([batch_size_train,3]))
-            output2= output2.reshape(([batch_size_train,4]))
-            output3= output3.reshape(([batch_size_train,4]))
+
             # Running_Loss_Train
             loss1 = criterion(output1, labels1)
             loss2 = criterion(output2, labels2)
@@ -189,9 +178,6 @@ for epoch in range(70):
         for data in validDataloader:
             images, labels1, labels2, labels3 = data
             output1, output2, output3 = net(images, batch_size_valid_and_test)
-            output1= output1.reshape(([batch_size_valid_and_test,3]))
-            output2= output2.reshape(([batch_size_valid_and_test,4]))
-            output3= output3.reshape(([batch_size_valid_and_test,4]))
 
             # Running_Loss_Valid
             loss1 = criterion(output1, labels1)
@@ -225,10 +211,10 @@ print("Max Accuracy in validtest: ", max)
 print('Finished')
 
 # DA TERMINALE IN BASSO -> tensorboard --logdir=runs
-"""
 
+"""
 # Salvataggio
-net = RNN_LSTM(input_size, hidden_sizes, output_size, n_layers, seq_len)
+net = NetRNN(input_size, hidden_sizes, output_size)
 PATH = './last.pth'
 net.load_state_dict(torch.load(PATH))
 
@@ -250,9 +236,6 @@ with torch.no_grad():
     for data in validDataloader:
         images, labels1, labels2, labels3 = data
         output1, output2, output3 = net(images, batch_size_valid_and_test)
-        output1= output1.reshape(([batch_size_valid_and_test,3]))
-        output2= output2.reshape(([batch_size_valid_and_test,4]))
-        output3= output3.reshape(([batch_size_valid_and_test,4]))
         # the class with the highest energy is what we choose as prediction
         _, predicted1 = torch.max(output1.data, 1)
         _, predicted2 = torch.max(output2.data, 1)
@@ -291,9 +274,6 @@ with torch.no_grad():
     for data in testDataloader:
         images, labels1, labels2, labels3 = data
         output1, output2, output3 = net(images, batch_size_valid_and_test)
-        output1= output1.reshape(([batch_size_valid_and_test,3]))
-        output2= output2.reshape(([batch_size_valid_and_test,4]))
-        output3= output3.reshape(([batch_size_valid_and_test,4]))
         # the class with the highest energy is what we choose as prediction
         _, predicted1 = torch.max(output1.data, 1)
         _, predicted2 = torch.max(output2.data, 1)
@@ -328,9 +308,6 @@ with torch.no_grad():
     for data in testDataloader:
         images, labels1, labels2, labels3 = data
         output1, output2, output3 = net(images, batch_size_valid_and_test)
-        output1= output1.reshape(([batch_size_valid_and_test,3]))
-        output2= output2.reshape(([batch_size_valid_and_test,4]))
-        output3= output3.reshape(([batch_size_valid_and_test,4]))
         _, predicted1 = torch.max(output1.data, 1)
         _, predicted2 = torch.max(output2.data, 1)
         _, predicted3 = torch.max(output3.data, 1)

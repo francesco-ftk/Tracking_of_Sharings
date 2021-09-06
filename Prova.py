@@ -71,37 +71,51 @@ input_size = 531
 output_size = 3
 n_layers = 1
 seq_len = 1
-hidden_sizes = 267
+hidden_sizes = [267,134,34]
 
 class RNN_LSTM(nn.Module):
     def __init__(self, input_size, hidden_sizes, output_size, n_layers, seq_len):
         super().__init__()
         self.input_size = input_size
-        self.latent_size = hidden_sizes
+        self.first_hidden = hidden_sizes[0]
+        self.second_hidden = hidden_sizes[1]
+        self.latent_size = hidden_sizes[2]
         self.seq_len = seq_len
         self.n_layers= n_layers
-        self.lstm = nn.LSTM(self.input_size, self.latent_size, self.n_layers, batch_first=True)
+        self.lstm1 = nn.LSTM(self.input_size, self.first_hidden, self.n_layers, batch_first=True)
+        self.lstm2 = nn.LSTM(self.first_hidden, self.second_hidden, self.n_layers, batch_first=True)
+        self.lstm3 = nn.LSTM(self.second_hidden, self.latent_size, self.n_layers, batch_first=True)
         self.fl1 = nn.Linear(self.latent_size, output_size)
         self.fl2 = nn.Linear(self.latent_size, output_size+1)
 
     def forward(self, x, batch_size):
-        hidden_state = torch.zeros(self.n_layers, batch_size, self.latent_size)
-        cell_state = torch.zeros(self.n_layers, batch_size, self.latent_size)
-        hidden = (hidden_state, cell_state)
+        h1 = torch.zeros(self.n_layers, batch_size, self.first_hidden)
+        c1 = torch.zeros(self.n_layers, batch_size, self.first_hidden)
+        hidden1 = (h1, c1)
+        h2 = torch.zeros(self.n_layers, batch_size, self.second_hidden)
+        c2 = torch.zeros(self.n_layers, batch_size, self.second_hidden)
+        hidden2 = (h2, c2)
+        h3 = torch.zeros(self.n_layers, batch_size, self.latent_size)
+        c3 = torch.zeros(self.n_layers, batch_size, self.latent_size)
+        hidden3 = (h3, c3)
         x = x.reshape([batch_size, self.seq_len, self.input_size])
         share = []
         for i in range(3):
-            y, hidden = self.lstm(x,hidden)
+            y, hidden1 = self.lstm1(x,hidden1)
+            y, hidden2 = self.lstm2(y,hidden2)
+            y, hidden3 = self.lstm3(y,hidden3)
             if i == 0:
-                y = self.fl1(hidden[0])
+                y = self.fl1(hidden3[0])
             else:
-                y = self.fl2(hidden[0])
+                y = self.fl2(hidden3[0])
             share.append(y)
         return share[0], share[1], share[2]
 
 
 f = h5py.File('12LabelsNormalized.h5', 'r')
 f1 = h5py.File('39tripleLabels.h5', 'r')
+
+"""
 
 Features_test = f['train/features']
 Labels1_test = f1['train/labels/share1']
@@ -132,7 +146,7 @@ optimizer = optim.Adam(net.parameters(), weight_decay=1e-5)
 writer = SummaryWriter("runs")
 max = 0
 
-for epoch in range(70):
+for epoch in range(100):
 
     print('Running Epoch: ', epoch)
 
@@ -355,4 +369,3 @@ for classname, correct_count in correct_pred.items():
     accuracy = 100 * float(correct_count) / total_pred[classname]
     print("Accuracy for class {:2s} is: {:.1f} %".format(classname,
                                                          accuracy))
-"""
