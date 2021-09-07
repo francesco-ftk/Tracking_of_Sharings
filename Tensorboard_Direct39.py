@@ -72,8 +72,6 @@ class NetMLP(nn.Module):
 f = h5py.File('12LabelsNormalized.h5', 'r')
 f1 = h5py.File('39Labels.h5', 'r')
 
-"""
-
 Features_test = f['train/features']
 Labels_test = f1['train/labels']
 
@@ -99,7 +97,7 @@ optimizer = optim.Adam(net.parameters())
 writer = SummaryWriter("2HideMetodoDirect39")
 max = 0
 
-for epoch in range(150):
+for epoch in range(80):
 
     print('Running Epoch: ', epoch)
 
@@ -152,7 +150,7 @@ for epoch in range(150):
 
     if Accuracy_Valid > max:
         max = Accuracy_Valid
-        PATH = './last1.pth'
+        PATH = './last.pth'
         torch.save(net.state_dict(), PATH)
 
     running_loss_valid = running_loss_valid / 120
@@ -168,7 +166,7 @@ print('Finished')
 
 # Salvataggio
 net = NetMLP(input_size, hidden_sizes, output_size)
-PATH = './51Direct39.pth'
+PATH = './last.pth'
 net.load_state_dict(torch.load(PATH))
 
 Features = f['valid/features']
@@ -209,4 +207,4 @@ with torch.no_grad():
 
 print('Accuracy of the network on the 7020 test images: %.2f %%' % (100 * correct / total))
 
-
+"""
