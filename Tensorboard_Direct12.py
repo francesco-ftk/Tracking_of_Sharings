@@ -15,16 +15,36 @@ from torch.utils.tensorboard import SummaryWriter
 ### DI ADDESTRAMENTO. L'ACCURATEZZA DEL VALIDSET AUMENTA FINO A STABILIZZARSI
 ### VERSO LA 60-EPOCA.
 
+#    ESEGUO MLP CON:
+#    - DATASET NORMALIZZATO E 12 Labels
+#    - 60 epoche
+#    - CrossEntropy
+#    - 117 Batch Size per training
+#    - 60 Batch Size per Validation e Test
+#    - 3 livelli nascosti, 531 [256, 128, 64] 12
+#    - optimizer SGD con Nesterov Momentum ---> 75% con loss di 0.562
+#    75Nesterov2.pth
+
+#    ESEGUO MLP CON:
+#    - DATASET NORMALIZZATO E 12 Labels
+#    - 45 epoche
+#    - CrossEntropy
+#    - 117 Batch Size per training
+#    - 60 Batch Size per Validation e Test
+#    - 3 livelli nascosti, 531 [256, 128, 64] 12
+#    - optimizer Adam ---> 79% con loss di 0.392
+#    79Adam2.pth
+
 ### RETE CON LA MIGLIORE ACCURATEZZA SUL VALIDSET:
 #    ESEGUO METODO DIRECT12:
 #    - DATASET NORMALIZZATO E 12 LABELS
-#    - 126/150 epoche
+#    - 77/80 epoche
 #    - CrossEntropy
 #    - 117 Batch Size per training
 #    - 60 Batch Size per Validation e Test
 #    - 3 livelli nascosti, 531 [256, 128, 32] 3/4
-#    - Adam ---> 80.58% sul valid, 80.36% sul test
-#    80Adam2.pth
+#    - Adam ---> 80.09% sul valid, 81.15% sul test
+#    81.15Adam2.pth
 
 
 batch_size_train = 117
@@ -70,6 +90,7 @@ class NetMLP(nn.Module):
 
 f = h5py.File('12LabelsNormalized.h5', 'r')
 
+"""
 Features_test = f['train/features']
 Labels_test = f['train/labels']
 
@@ -92,10 +113,10 @@ criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(net.parameters())
 
 # Writer will output to ./runs/ directory by default
-writer = SummaryWriter("MetodoDirect12")
+writer = SummaryWriter("runs")
 max = 0
 
-for epoch in range(150):
+for epoch in range(80):
 
     print('Running Epoch: ', epoch)
 
@@ -159,3 +180,55 @@ for epoch in range(150):
 writer.close()
 print("Max Accuracy in validtest: ", max)
 print('Finished')
+
+"""
+
+# Salvataggio
+net = NetMLP(input_size, hidden_sizes, output_size)
+PATH = './81.15Adam2.pth'
+net.load_state_dict(torch.load(PATH))
+
+validSet = f['valid']
+Features = validSet['features']
+Labels= validSet['labels']
+
+validationSet = CustomDataset(Features,Labels)
+validDataloader = torch.utils.data.DataLoader(validationSet, batch_size=60, shuffle=False)
+
+correct = 0
+total = 0
+# since we're not training, we don't need to calculate the gradients for our outputs
+with torch.no_grad():
+    for data in validDataloader:
+        images, labels = data
+        # calculate outputs by running images through the network
+        outputs = net(images)
+        # the class with the highest energy is what we choose as prediction
+        _, predicted = torch.max(outputs.data, 1)
+        total += labels.size(0)
+        correct += (predicted == labels).sum().item()
+
+print('Accuracy of the network on the 7020 validation images: %.2f %%' % (100 * correct / total))
+
+
+testSet = f['test']
+Features = testSet['features']
+Labels= testSet['labels']
+
+testSet = CustomDataset(Features,Labels)
+testDataloader = torch.utils.data.DataLoader(testSet, batch_size=60, shuffle=False)
+
+correct = 0
+total = 0
+# since we're not training, we don't need to calculate the gradients for our outputs
+with torch.no_grad():
+    for data in testDataloader:
+        images, labels = data
+        # calculate outputs by running images through the network
+        outputs = net(images)
+        # the class with the highest energy is what we choose as prediction
+        _, predicted = torch.max(outputs.data, 1)
+        total += labels.size(0)
+        correct += (predicted == labels).sum().item()
+
+print('Accuracy of the network on the 7020 test images: %.2f %%' % (100 * correct / total))

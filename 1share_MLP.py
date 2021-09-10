@@ -118,6 +118,12 @@ print('Finished Training')
 PATH = './100Adam.pth'
 torch.save(net.state_dict(), PATH)
 
+"""
+# Salvataggio
+net = NetMLP(input_size, hidden_sizes, output_size)
+PATH = './100Adam.pth'
+net.load_state_dict(torch.load(PATH))
+
 validSet = f['valid']
 Features = validSet['features']
 Labels= validSet['labels']
@@ -125,11 +131,6 @@ Labels= validSet['labels']
 validationSet = CustomDataset(Features,Labels)
 validDataloader = torch.utils.data.DataLoader(validationSet, batch_size=60, shuffle=False)
 
-"""
-# Salvataggio
-net = NetMLP(input_size, hidden_sizes, output_size)
-PATH = './100Adam.pth'
-net.load_state_dict(torch.load(PATH))
 
 correct = 0
 total = 0
@@ -144,7 +145,7 @@ with torch.no_grad():
         total += labels.size(0)
         correct += (predicted == labels).sum().item()
 
-print('Accuracy of the network on the 7020 validation images: %d %%' % (100 * correct / total))
+print('Accuracy of the network on the 7020 validation images: %.2f %%' % (100 * correct / total))
 
 
 testSet = f['test']
@@ -167,5 +168,5 @@ with torch.no_grad():
         total += labels.size(0)
         correct += (predicted == labels).sum().item()
 
-print('Accuracy of the network on the 7020 test images: %d %%' % (100 * correct / total))
+print('Accuracy of the network on the 7020 test images: %.2f %%' % (100 * correct / total))
 

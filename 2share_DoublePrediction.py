@@ -6,7 +6,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from torch.utils.data import Dataset
-
+from torch.utils.tensorboard import SummaryWriter
 
 ######################################################################################
 #    ESEGUO METODO MLP CON DOPPIO OUTPUT CONTEMPORANEO E LOSS SOMMATA CON:
@@ -28,6 +28,28 @@ from torch.utils.data import Dataset
 #    - 2 livelli nascosti, 531 [128, 32] 3/4
 #    - optimizer Adam ---> 78%, 79% nel test
 #    Adam2HideDoubleSum78.pth
+
+#    ESEGUO METODO MLP CON DOPPIO OUTPUT CONTEMPORANEO E LOSS SOMMATA CON:
+#    - DATASET NORMALIZZATO E 3 Labels per la prima share e 4 Labels per la seconda
+#    - 71/80 epoche
+#    - CrossEntropy
+#    - 117 Batch Size per training
+#    - 60 Batch Size per Validation e Test
+#    - 3 livelli nascosti, 531 [256, 128, 32] 3/4
+#    - optimizer Adam ---> 80%, 81.08% nel test
+#    81.08_DoublePrediction.pth
+
+#Accuracy of the network on the 7020 test images: 81.08 %
+#Accuracy of the network on the last share: 100.00 %
+#Accuracy of the network on the second-last share: 81.08 %
+
+#Accuracy for class FB is: 95.1 %
+#Accuracy for class FL is: 92.6 %
+#Accuracy for class TW is: 89.3 %
+#Accuracy for class NONE is: 45.7 %
+
+batch_size_train = 117
+batch_size_valid_and_test = 60
 
 class CustomDataset(Dataset):
     def __init__(self, Features, Labels1, Labels2, transform=None, target_transform=None):
@@ -53,8 +75,7 @@ class CustomDataset(Dataset):
 
 
 input_size = 531
-hidden_sizes = [128, 32]
-# [256, 128, 32]
+hidden_sizes = [256, 128, 32]
 output_size1 = 3
 output_size2 = 4
 
@@ -64,55 +85,65 @@ class NetMLP(nn.Module):
         super().__init__()
         self.fl1 = nn.Linear(input_size, hidden_sizes[0])
         self.fl2 = nn.Linear(hidden_sizes[0], hidden_sizes[1])
-        # self.fl3 = nn.Linear(hidden_sizes[1], hidden_sizes[2])
+        self.fl3 = nn.Linear(hidden_sizes[1], hidden_sizes[2])
 
         # Classifier for last share.
-        self.share1 = nn.Linear(hidden_sizes[1], output_size1)
+        self.share1 = nn.Linear(hidden_sizes[2], output_size1)
         # Classifier for penultimate share.
-        self.share2 = nn.Linear(hidden_sizes[1], output_size2)
+        self.share2 = nn.Linear(hidden_sizes[2], output_size2)
 
     def forward(self, x):
         x = F.relu(self.fl1(x))
         x = F.relu(self.fl2(x))
-        # x = F.relu(self.fl3(x))
+        x = F.relu(self.fl3(x))
         # Compute outputs.
         share1 = self.share1(x)
         share2 = self.share2(x)
         return share1, share2
 
-
-# classes = ('FB', 'FL', 'TW', 'none')
-
 f = h5py.File('12LabelsNormalized.h5', 'r')
-f1 = h5py.File('doubleLabels.h5', 'r')
+f1 = h5py.File('12doubleLabels.h5', 'r')
 
 """
 
-Features = f['train/features']
-Labels1 = f1['train/labels/share1']
-Labels2 = f1['train/labels/share2']
+Features_test = f['train/features']
+Labels1_test = f1['train/labels/share1']
+Labels2_test = f1['train/labels/share2']
 
 # trasform = none perché escono già come Tensori
 
-trainingSet = CustomDataset(Features, Labels1, Labels2)
-trainDataloader = DataLoader(trainingSet, batch_size=117, shuffle=True)
+trainingSet = CustomDataset(Features_test, Labels1_test, Labels2_test)
+trainDataloader = DataLoader(trainingSet, batch_size=batch_size_train, shuffle=True)
+
+trainingSet1 = CustomDataset(Features_test, Labels1_test, Labels2_test)
+trainDataloader1 = DataLoader(trainingSet1, batch_size=batch_size_train, shuffle=False)
+
+Features = f['valid/features']
+Labels1 = f1['valid/labels/share1']
+Labels2 = f1['valid/labels/share2']
+
+validationSet = CustomDataset(Features, Labels1, Labels2)
+validDataloader = torch.utils.data.DataLoader(validationSet, batch_size=batch_size_valid_and_test, shuffle=False)
 
 net = NetMLP(input_size, hidden_sizes, output_size1, output_size2)
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(net.parameters())
 #optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9, nesterov=True)
 
-for epoch in range(25):  # loop over the dataset multiple times
+# Writer will output to ./runs/ directory by default
+writer = SummaryWriter("runs")
+max = 0
 
-    running_loss = 0.0
+for epoch in range(80):  # loop over the dataset multiple times
+
+    print('Running Epoch: ', epoch)
+
     for i, data in enumerate(trainDataloader, 0):
-        # get the inputs; data is a list of [inputs, labels]
         inputs, labels1, labels2 = data
 
         # zero the parameter gradients
         optimizer.zero_grad()
 
-        # forward + backward + optimize
         output1, output2 = net(inputs)
         loss1 = criterion(output1, labels1)
         loss2 = criterion(output2, labels2)
@@ -120,23 +151,74 @@ for epoch in range(25):  # loop over the dataset multiple times
         loss.backward()
         optimizer.step()
 
-        # print statistics
-        running_loss += loss.item()
-        if i % 18 == 17 :
-            print('[%d, %5d] loss: %.3f' %
-                  (epoch + 1, i + 1, running_loss / 18))
-            running_loss = 0.0
+    running_loss_train = 0.0
+    correct = 0
+    total = 0
 
-print('Finished Training')
+    with torch.no_grad():
+        for data in trainDataloader1:
+            images, labels1, labels2 = data
+            output1, output2 = net(images)
 
-PATH = './last.pth'
-torch.save(net.state_dict(), PATH)
+            # Running_Loss_Train
+            loss1 = criterion(output1, labels1)
+            loss2 = criterion(output2, labels2)
+            loss = loss1 + loss2
+            running_loss_train += loss.item()
+
+            _, predicted1 = torch.max(output1.data, 1)
+            _, predicted2 = torch.max(output2.data, 1)
+            total += labels1.size(0)
+            for i in range(len(predicted1)):
+                if predicted1[i] == labels1[i] and predicted2[i] == labels2[i]:
+                    correct += 1
+
+    Accuracy_Train = 100 * correct / total
+    running_loss_train = running_loss_train/ 180
+
+    running_loss_valid = 0.0
+    correct = 0
+    total = 0
+
+    with torch.no_grad():
+        for data in validDataloader:
+            images, labels1, labels2 = data
+            output1, output2 = net(images)
+
+            # Running_Loss_Valid
+            loss1 = criterion(output1, labels1)
+            loss2 = criterion(output2, labels2)
+            loss = loss1 + loss2
+            running_loss_valid += loss.item()
+
+            _, predicted1 = torch.max(output1.data, 1)
+            _, predicted2 = torch.max(output2.data, 1)
+            total += labels1.size(0)
+            for i in range(len(predicted1)):
+                if predicted1[i] == labels1[i] and predicted2[i] == labels2[i]:
+                    correct += 1
+
+    Accuracy_Valid = 100 * correct / total
+
+    if Accuracy_Valid > max:
+        max = Accuracy_Valid
+        PATH = './last.pth'
+        torch.save(net.state_dict(), PATH)
+
+    running_loss_valid = running_loss_valid / 120
+
+    writer.add_scalars('Loss', {'trainset': running_loss_train,'validset': running_loss_valid}, epoch+1)
+    writer.add_scalars('Accuracy', {'trainset': Accuracy_Train,'validset': Accuracy_Valid}, epoch+1)
+
+writer.close()
+print("Max Accuracy in validtest: ", max)
+print('Finished')
 
 """
 
 # Salvataggio
 net = NetMLP(input_size, hidden_sizes, output_size1, output_size2)
-PATH = './Adam2HideDoubleSum78.pth'
+PATH = './last.pth'
 net.load_state_dict(torch.load(PATH))
 
 Features = f['valid/features']
@@ -241,24 +323,4 @@ for classname, correct_count in correct_pred.items():
     print("Accuracy for class {:2s} is: {:.1f} %".format(classname,
                                                    accuracy))
 
-"""
 
-dataiter = iter(trainDataloader)
-images, labels = dataiter.next()
-print(labels.shape)
-print(labels)
-print(labels[0])
-print(labels[0,0])
-print(labels[0,1])
-print(labels[1,0])
-print(labels[1,1])
-
-dataiter = iter(trainDataloader)
-images, labels1, labels2 = dataiter.next()
-print(labels1.shape)
-print(labels1)
-print(labels2.shape)
-print(labels2)
-print(images.shape)
-
-"""

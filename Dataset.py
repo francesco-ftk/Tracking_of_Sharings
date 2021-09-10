@@ -165,38 +165,6 @@ file.close()
  ### PER LA PRIMA CONDIVISIONE (3 social) E L'ALTRA SU 4 CLASSI PER LA
  ### SECONDA (3 social + none) ###
 
-"""
-def toDoubleLabels1(labels):
-    newLabels = np.empty((0,2))
-    for i in range(0,labels.shape[0],1):
-        if(labels[i] == 0):
-            newLabels = np.vstack((newLabels, np.array([[0,4]])))
-        elif(labels[i] == 1):
-            newLabels = np.vstack((newLabels, np.array([[1,4]])))
-        elif(labels[i] == 2):
-            newLabels = np.vstack((newLabels, np.array([[2,4]])))
-        elif(labels[i] == 3):
-            newLabels = np.vstack((newLabels, np.array([[0,0]])))
-        elif(labels[i] == 4):
-            newLabels = np.vstack((newLabels, np.array([[1,0]])))
-        elif(labels[i] == 5):
-            newLabels = np.vstack((newLabels, np.array([[2,0]])))
-        elif(labels[i] == 6):
-            newLabels = np.vstack((newLabels,np.array([[0,1]])))
-        elif(labels[i] == 7):
-            newLabels = np.vstack((newLabels,np.array([[1,1]])))
-        elif(labels[i] == 8):
-            newLabels = np.vstack((newLabels, np.array([[2,1]])))
-        elif(labels[i] == 9):
-            newLabels = np.vstack((newLabels, np.array([[0,2]])))
-        elif(labels[i] == 10):
-            newLabels = np.vstack((newLabels, np.array([[1,2]])))
-        else:
-            newLabels = np.vstack((newLabels, np.array([[2,2]])))
-    newLabels = np.int_(newLabels)
-    return newLabels
-"""
-
 def toDoubleLabels(labels):
     newLabels = np.empty([0,0])
     newLabels1 = np.empty([0,0])
@@ -248,7 +216,7 @@ trainLabels = file['train/labels']
 validLabels = file['valid/labels']
 testLabels = file['test/labels']
 
-newfile = h5py.File('doubleLabels.h5', 'a')
+newfile = h5py.File('12doubleLabels.h5', 'a')
 
 trainLabels, trainLabels1= toDoubleLabels(trainLabels)
 newfile.create_dataset('train/labels/share1', (21060,), dtype='int64', data=trainLabels)
@@ -474,7 +442,7 @@ trainLabels = file['train/labels']
 validLabels = file['valid/labels']
 testLabels = file['test/labels']
 
-newfile = h5py.File('tripleLabels.h5', 'a')
+newfile = h5py.File('39tripleLabels.h5', 'a')
 
 trainLabels, trainLabels1, trainLabels2= toTripleLabels(trainLabels)
 newfile.create_dataset('train/labels/share1', (21060,), dtype='int64', data=trainLabels)
@@ -491,22 +459,6 @@ newfile.create_dataset('test/labels/share3', (7020,), dtype='int64', data=testLa
 
 newfile.close()
 file.close()
-"""
-
-"""
-import torch
-
-y=[]
-print(y)
-x = torch.empty((0,117,3))
-shape = (117,3)
-zeros_tensor = torch.zeros(shape)
-ones_tensor = torch.ones(shape)
-y.append(zeros_tensor)
-y.append(ones_tensor)
-print(y)
-m = y[0]
-print("\n m: " , m)
 """
 
 ######################################################################################
