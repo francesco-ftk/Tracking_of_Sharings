@@ -18,24 +18,23 @@ from torch.utils.tensorboard import SummaryWriter
 ### RETE CON LA MIGLIORE ACCURATEZZA SUL VALIDSET:
 #    ESEGUO METODO LSTM:
 #    - DATASET NORMALIZZATO E 3 Labels per la prima condivisione e 4 per la seconda e la terza Labels
-#    - 98/100 epoche
+#    - 80/80 epoche
 #    - CrossEntropy
 #    - 117 Batch Size per training
 #    - 60 Batch Size per Validation e Test
 #    - 1 livello nascosto, 531 [267] 3/4
-#    - Adam con weight_decay=1e-5---> 49.52% sul valid, 50.58% sul test
-#    50.58_LSTM.pth
+#    - Adam con weight_decay=1e-5---> 49.62% sul valid, 50.74% sul test
+#    50.74_LSTM.pth
 
-# Accuracy of the network on the 7020 test images: 50.58 %
-# Accuracy of the network on the last share: 100.00 %
-# Accuracy of the network on the second-last share: 81.11 %
-# Accuracy of the network on the third-last share: 62.26 %
+#Accuracy of the network on the 7020 test images: 50.74 %
+#Accuracy of the network on the last share: 100.00 %
+#Accuracy of the network on the second-last share: 80.51 %
+#Accuracy of the network on the third-last share: 62.76 %
 
-
-# Accuracy for class FB is: 89.1 %
-# Accuracy for class FL is: 86.5 %
-# Accuracy for class TW is: 78.9 %
-# Accuracy for class NONE is: 55.8 %
+#Accuracy for class FB is: 88.9 %
+#Accuracy for class FL is: 86.9 %
+#Accuracy for class TW is: 80.7 %
+#Accuracy for class NONE is: 51.1 %
 
 batch_size_train = 117
 batch_size_valid_and_test = 60
@@ -103,6 +102,8 @@ class RNN_LSTM(nn.Module):
 f = h5py.File('12LabelsNormalized.h5', 'r')
 f1 = h5py.File('39tripleLabels.h5', 'r')
 
+"""
+
 Features_test = f['train/features']
 Labels1_test = f1['train/labels/share1']
 Labels2_test = f1['train/labels/share2']
@@ -132,7 +133,7 @@ optimizer = optim.Adam(net.parameters(), weight_decay=1e-5)
 writer = SummaryWriter("runs")
 max = 0
 
-for epoch in range(70):
+for epoch in range(80):
 
     print('Running Epoch: ', epoch)
 
@@ -355,4 +356,3 @@ for classname, correct_count in correct_pred.items():
     accuracy = 100 * float(correct_count) / total_pred[classname]
     print("Accuracy for class {:2s} is: {:.1f} %".format(classname,
                                                          accuracy))
-"""

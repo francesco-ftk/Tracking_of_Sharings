@@ -95,6 +95,8 @@ class NetRNN(nn.Module):
 f = h5py.File('12LabelsNormalized.h5', 'r')
 f1 = h5py.File('39tripleLabels.h5', 'r')
 
+"""
+
 Features_test = f['train/features']
 Labels1_test = f1['train/labels/share1']
 Labels2_test = f1['train/labels/share2']
@@ -125,7 +127,7 @@ optimizer = optim.Adam(net.parameters(), weight_decay=1e-5)
 writer = SummaryWriter("runs")
 max = 0
 
-for epoch in range(60):
+for epoch in range(80):
 
     print('Running Epoch: ', epoch)
 
@@ -332,4 +334,3 @@ for classname, correct_count in correct_pred.items():
     accuracy = 100 * float(correct_count) / total_pred[classname]
     print("Accuracy for class {:2s} is: {:.1f} %".format(classname,
                                                          accuracy))
-"""

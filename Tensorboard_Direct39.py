@@ -51,7 +51,7 @@ class CustomDataset(Dataset):
         return image, label
 
 input_size = 531
-hidden_sizes = [256, 128] # [256, 128, 64]
+hidden_sizes = [256, 128]  # [256, 128, 64]
 output_size = 39
 
 class NetMLP(nn.Module):
@@ -71,6 +71,8 @@ class NetMLP(nn.Module):
 
 f = h5py.File('12LabelsNormalized.h5', 'r')
 f1 = h5py.File('39Labels.h5', 'r')
+
+"""
 
 Features_test = f['train/features']
 Labels_test = f1['train/labels']
@@ -94,7 +96,7 @@ criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(net.parameters())
 
 # Writer will output to ./runs/ directory by default
-writer = SummaryWriter("2HideMetodoDirect39")
+writer = SummaryWriter("runs")
 max = 0
 
 for epoch in range(80):
@@ -207,4 +209,4 @@ with torch.no_grad():
 
 print('Accuracy of the network on the 7020 test images: %.2f %%' % (100 * correct / total))
 
-"""
+

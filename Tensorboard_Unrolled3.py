@@ -132,11 +132,9 @@ net = NetMLPUnrolled(input_size, hidden_sizes, output_size)
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(net.parameters(), weight_decay=1e-5)
 
-"""
 # Writer will output to ./runs/ directory by default
 writer = SummaryWriter("runs")
 max = 0
-"""
 
 for epoch in range(100):  # loop over the dataset multiple times
 
@@ -157,7 +155,6 @@ for epoch in range(100):  # loop over the dataset multiple times
         loss.backward()
         optimizer.step()
 
-"""
     running_loss_train = 0.0
     correct = 0
     total = 0
@@ -226,6 +223,8 @@ print("Max Accuracy in validtest: ", max)
 print('Finished')
 
 # DA TERMINALE IN BASSO -> tensorboard --logdir=runs
+
+"""
 
 # Salvataggio
 net = NetMLPUnrolled(input_size, hidden_sizes, output_size)
