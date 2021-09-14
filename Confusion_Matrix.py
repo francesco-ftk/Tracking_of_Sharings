@@ -35,9 +35,10 @@ class CustomDataset(Dataset):
 
 
 input_size = 531 # 521
-hidden_sizes = [256, 128, 32]
+hidden_sizes = 267 #[256, 128, 32]
 output_size = 3
 
+"""
 class NetRNN(nn.Module):
     def __init__(self, input_size, hidden_sizes, output_size):
         super().__init__()
@@ -62,6 +63,28 @@ class NetRNN(nn.Module):
                 y = self.fl5(latent)
             share.append(y)
         return share[0], share[1], share[2]
+"""
+
+class NetRNN(nn.Module):
+    def __init__(self, input_size, hidden_sizes, output_size):
+        super().__init__()
+        self.latent_size = hidden_sizes
+        self.fl1 = nn.Linear(input_size + self.latent_size, hidden_sizes)
+        self.fl2 = nn.Linear(hidden_sizes, output_size)
+        self.fl3 = nn.Linear(hidden_sizes, output_size+1)
+
+    def forward(self, x, batch_size):
+        latent = torch.zeros([batch_size, self.latent_size])
+        share = []
+        for i in range(3):
+            y = torch.cat((x, latent), 1)
+            latent = F.relu(self.fl1(y))
+            if i == 0:
+                y = self.fl2(latent)
+            else:
+                y = self.fl3(latent)
+            share.append(y)
+        return share[0], share[1], share[2]
 
 f = h5py.File('12LabelsNormalized.h5', 'r')
 #f = h5py.File('2FeaturesNormalized.h5', 'r')
@@ -69,7 +92,7 @@ f1 = h5py.File('39tripleLabels.h5', 'r')
 
 # Salvataggio
 net = NetRNN(input_size, hidden_sizes, output_size)
-PATH = './50.66_RNN.pth'
+PATH = './51.01_RNN.pth'
 net.load_state_dict(torch.load(PATH))
 
 Features = f['test/features']
@@ -79,8 +102,6 @@ Labels3 = f1['test/labels/share3']
 
 testSet = CustomDataset(Features, Labels1, Labels2, Labels3)
 testDataloader = torch.utils.data.DataLoader(testSet, batch_size=batch_size_valid_and_test, shuffle=False)
-
-"""
 
 true1 = torch.empty(0)
 true2 = torch.empty(0)
@@ -112,8 +133,6 @@ print(confusion_matrix(true2, pred2))
 print("\n")
 print("Confusion Matrix third level: ")
 print(confusion_matrix(true3, pred3))
-
-"""
 
 ##########################################################
 ### CONFUSION MATRIX PER LIVELLO CON 50.66_RNN.pth ###
@@ -160,6 +179,8 @@ Confusion Matrix third level:
  [ 245 1028   73  274]
  [ 191  193  885  351]
  [ 417  450  200 1093]]
+"""
+
 """
 
 FBFB = 0
@@ -244,8 +265,9 @@ ConfusionMatrix = torch.vstack((ConfusionMatrix,row))
 
 print("Confusion Matrix for last and second last share: ")
 print(ConfusionMatrix)
+"""
 
-######################################################àà
+######################################################
 ### Matrice di Confusione per ultima e penultima condivisione su 2 share con 50.66_RNN.pth ###
 
 """
@@ -253,5 +275,30 @@ print(ConfusionMatrix)
 FB [163, 150, 172]
 FL [167, 177, 166]
 TW [170, 128, 120]
+
+"""
+
+###############################################################
+### CONFUSION MATRIX PER LIVELLO CON 51.01_RNN.pth ###
+"""
+
+Confusion Matrix first level: 
+[[2340    0    0]
+ [   0 2340    0]
+ [   0    0 2340]]
+
+
+Confusion Matrix second level: 
+[[1961   61  129    9]
+ [ 148 1841  136   35]
+ [ 281  214 1655   10]
+ [  19   70  208  243]]
+
+
+Confusion Matrix third level: 
+[[1293   94   80  153]
+ [ 312 1036  100  172]
+ [ 218  174  927  301]
+ [ 489  316  172 1183]]
 
 """
