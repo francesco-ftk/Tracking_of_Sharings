@@ -16,6 +16,16 @@ from torch.utils.tensorboard import SummaryWriter
 ### DI ADDESTRAMENTO. L'ACCURATEZZA DEL VALIDSET AUMENTA FINO A STABILIZZARSI
 ### VERSO LA 80-EPOCA.
 
+#    ESEGUO METODO DIRECT39:
+#    - DATASET NORMALIZZATO CON 2 FEATURES E 39 LABELS
+#    - /80 epoche
+#    - CrossEntropy
+#    - 117 Batch Size per training
+#    - 60 Batch Size per Validation e Test
+#    - 2 livelli nascosti, 521 [256, 128] 39
+#    - Adam --->  33.33%  sul valid, 34.67%  sul test
+#    34.67_D39.pth
+
 ### RETE CON LA MIGLIORE ACCURATEZZA SUL VALIDSET:
 #    ESEGUO METODO DIRECT39:
 #    - DATASET NORMALIZZATO E 39 LABELS
@@ -50,7 +60,7 @@ class CustomDataset(Dataset):
             label = self.target_transform(label)
         return image, label
 
-input_size = 531
+input_size = 521 #531
 hidden_sizes = [256, 128]  # [256, 128, 64]
 output_size = 39
 
@@ -69,7 +79,8 @@ class NetMLP(nn.Module):
         x = self.fl4(x)
         return x
 
-f = h5py.File('12LabelsNormalized.h5', 'r')
+#f = h5py.File('12LabelsNormalized.h5', 'r')
+f = h5py.File('2FeaturesNormalized.h5','r')
 f1 = h5py.File('39Labels.h5', 'r')
 
 """
@@ -170,6 +181,7 @@ print('Finished')
 net = NetMLP(input_size, hidden_sizes, output_size)
 PATH = './last.pth'
 net.load_state_dict(torch.load(PATH))
+
 
 Features = f['valid/features']
 Labels= f1['valid/labels']

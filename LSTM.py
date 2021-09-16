@@ -36,6 +36,26 @@ from torch.utils.tensorboard import SummaryWriter
 #Accuracy for class TW is: 80.7 %
 #Accuracy for class NONE is: 51.1 %
 
+#    ESEGUO METODO LSTM:
+#    - DATASET NORMALIZZATO con 2 features e 3 Labels per la prima condivisione e 4 per la seconda e la terza Labels
+#    - 74/80 epoche
+#    - CrossEntropy
+#    - 117 Batch Size per training
+#    - 60 Batch Size per Validation e Test
+#    - 1 livello nascosto, 521 [262] 3/4
+#    - Adam con weight_decay=1e-5---> 32.91% sul valid, 34.54% sul test
+#    34.54_LSTM.pth.pth
+
+# Accuracy of the network on the 7020 test images: 34.54 %
+# Accuracy of the network on the last share: 92.76 %
+# Accuracy of the network on the second-last share: 68.28 %
+# Accuracy of the network on the third-last share: 51.92 %
+
+# Accuracy for class FB is: 71.0 %
+# Accuracy for class FL is: 82.3 %
+# Accuracy for class TW is: 70.4 %
+# Accuracy for class NONE is: 46.6 %
+
 batch_size_train = 117
 batch_size_valid_and_test = 60
 
@@ -66,11 +86,11 @@ class CustomDataset(Dataset):
         return image, labels1, labels2, labels3
 
 
-input_size = 531
+input_size = 521  # 531
 output_size = 3
 n_layers = 1
 seq_len = 1
-hidden_sizes = 267
+hidden_sizes = 262
 
 class RNN_LSTM(nn.Module):
     def __init__(self, input_size, hidden_sizes, output_size, n_layers, seq_len):
@@ -99,8 +119,9 @@ class RNN_LSTM(nn.Module):
         return share[0], share[1], share[2]
 
 
-f = h5py.File('12LabelsNormalized.h5', 'r')
+#f = h5py.File('12LabelsNormalized.h5', 'r')
 f1 = h5py.File('39tripleLabels.h5', 'r')
+f = h5py.File('2FeaturesNormalized.h5','r')
 
 """
 

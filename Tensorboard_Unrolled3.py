@@ -22,7 +22,7 @@ from torch.utils.tensorboard import SummaryWriter
 #    - CrossEntropy
 #    - 117 Batch Size per training
 #    - 60 Batch Size per Validation e Test
-#    - 3 livelli nascosti, 531 [256, 128, 32] 3/4
+#    - 3 livelli nascosti, 521 [256, 128, 32] 3/4
 #    - Adam con weight_decay=1e-5---> 48.45% sul valid, 50.24% sul test
 #    50.24_Unrolled3.pth
 
@@ -35,6 +35,27 @@ from torch.utils.tensorboard import SummaryWriter
 # Accuracy for class FL is: 86.5 %
 # Accuracy for class TW is: 80.0 %
 # Accuracy for class NONE is: 58.7 %
+
+### RETE CON LA MIGLIORE ACCURATEZZA SUL VALIDSET:
+#    ESEGUO METODO UNROLLED:
+#    - DATASET NORMALIZZATO con 2 features E 3 Labels per la prima condivisione e 4 per la seconda e la terza Labels
+#    - 80 epoche
+#    - CrossEntropy
+#    - 117 Batch Size per training
+#    - 60 Batch Size per Validation e Test
+#    - 3 livelli nascosti, 531 [256, 128, 32] 3/4
+#    - Adam con weight_decay=1e-5---> 31.99% sul valid, 33.86% sul test
+#    33.86_Unrolled3.pth
+
+# Accuracy of the network on the 7020 test images: 33.86 %
+# Accuracy of the network on the last share: 92.92 %
+# Accuracy of the network on the second-last share: 67.82 %
+# Accuracy of the network on the third-last share: 51.95 %
+
+# Accuracy for class FB is: 68.8 %
+# Accuracy for class FL is: 81.6 %
+# Accuracy for class TW is: 73.2 %
+# Accuracy for class NONE is: 46.3 %
 
 
 batch_size_train = 117
@@ -67,7 +88,7 @@ class CustomDataset(Dataset):
         return image, labels1, labels2, labels3
 
 
-input_size = 531
+input_size = 521  # 531
 hidden_sizes = [256, 128, 32]
 output_size = 3
 
@@ -104,7 +125,8 @@ class NetMLPUnrolled(nn.Module):
         return share1, share2, share3
 
 
-f = h5py.File('12LabelsNormalized.h5', 'r')
+f = h5py.File('2FeaturesNormalized.h5','r')
+#f = h5py.File('12LabelsNormalized.h5', 'r')
 f1 = h5py.File('39tripleLabels.h5', 'r')
 
 Features_test = f['train/features']
@@ -136,7 +158,7 @@ optimizer = optim.Adam(net.parameters(), weight_decay=1e-5)
 writer = SummaryWriter("runs")
 max = 0
 
-for epoch in range(100):  # loop over the dataset multiple times
+for epoch in range(80):  # loop over the dataset multiple times
 
     print('Running Epoch: ', epoch)
 
@@ -146,8 +168,6 @@ for epoch in range(100):  # loop over the dataset multiple times
         optimizer.zero_grad()
 
         output1, output2, output3 = net(inputs, batch_size_train)
-        print("output1= ", output1.shape)
-        print("labels1 =", labels1.shape)
         loss1 = criterion(output1, labels1)
         loss2 = criterion(output2, labels2)
         loss3 = criterion(output3, labels3)
@@ -228,7 +248,7 @@ print('Finished')
 
 # Salvataggio
 net = NetMLPUnrolled(input_size, hidden_sizes, output_size)
-PATH = './50.24_Unrolled3.pth'
+PATH = './last.pth'
 net.load_state_dict(torch.load(PATH))
 
 Features = f['valid/features']
@@ -345,6 +365,4 @@ for classname, correct_count in correct_pred.items():
     accuracy = 100 * float(correct_count) / total_pred[classname]
     print("Accuracy for class {:2s} is: {:.1f} %".format(classname,
                                                          accuracy))
-
-
 """

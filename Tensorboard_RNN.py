@@ -188,7 +188,7 @@ optimizer = optim.Adam(net.parameters(), weight_decay=1e-5)
 writer = SummaryWriter("runs")
 max = 0
 
-for epoch in range(80):
+for epoch in range(75):
 
     print('Running Epoch: ', epoch)
 

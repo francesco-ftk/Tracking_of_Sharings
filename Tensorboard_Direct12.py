@@ -35,6 +35,16 @@ from torch.utils.tensorboard import SummaryWriter
 #    - optimizer Adam ---> 79% con loss di 0.392
 #    79Adam2.pth
 
+#    ESEGUO METODO DIRECT12:
+#    - DATASET NORMALIZZATO CON 2 FEATURES E 12 LABELS
+#    - 73/80 epoche
+#    - CrossEntropy
+#    - 117 Batch Size per training
+#    - 60 Batch Size per Validation e Test
+#    - 3 livelli nascosti, 521 [256, 128, 32] 3/4
+#    - Adam ---> 62.64% sul valid, 63.53% sul test
+#    63.53_D12.pth
+
 ### RETE CON LA MIGLIORE ACCURATEZZA SUL VALIDSET:
 #    ESEGUO METODO DIRECT12:
 #    - DATASET NORMALIZZATO E 12 LABELS
@@ -69,7 +79,7 @@ class CustomDataset(Dataset):
             label = self.target_transform(label)
         return image, label
 
-input_size = 531
+input_size = 521 #531
 hidden_sizes = [256, 128, 64]
 output_size = 12
 
@@ -89,20 +99,20 @@ class NetMLP(nn.Module):
         return x
 
 f = h5py.File('12LabelsNormalized.h5', 'r')
+f1 = h5py.File('2FeaturesNormalized.h5','r')
 
-"""
-Features_test = f['train/features']
-Labels_test = f['train/labels']
+Features_train = f1['train/features']
+Labels_train = f['train/labels']
 
 # trasform = none perché escono già come Tensori
 
-trainingSet = CustomDataset(Features_test, Labels_test)
+trainingSet = CustomDataset(Features_train, Labels_train)
 trainDataloader = DataLoader(trainingSet, batch_size=batch_size_train, shuffle=True)
 
-trainingSet1 = CustomDataset(Features_test, Labels_test)
+trainingSet1 = CustomDataset(Features_train, Labels_train)
 trainDataloader1 = DataLoader(trainingSet1, batch_size=batch_size_train, shuffle=False)
 
-Features = f['valid/features']
+Features = f1['valid/features']
 Labels1 = f['valid/labels']
 
 validationSet = CustomDataset(Features, Labels1)
@@ -116,7 +126,7 @@ optimizer = optim.Adam(net.parameters())
 writer = SummaryWriter("runs")
 max = 0
 
-for epoch in range(80):
+for epoch in range(60):
 
     print('Running Epoch: ', epoch)
 
@@ -185,12 +195,13 @@ print('Finished')
 
 # Salvataggio
 net = NetMLP(input_size, hidden_sizes, output_size)
-PATH = './81.15Adam2.pth'
+PATH = './last.pth'
 net.load_state_dict(torch.load(PATH))
 
-validSet = f['valid']
-Features = validSet['features']
-Labels= validSet['labels']
+"""
+
+Features = f1['valid/features']
+Labels= f['valid/labels']
 
 validationSet = CustomDataset(Features,Labels)
 validDataloader = torch.utils.data.DataLoader(validationSet, batch_size=60, shuffle=False)
@@ -210,10 +221,8 @@ with torch.no_grad():
 
 print('Accuracy of the network on the 7020 validation images: %.2f %%' % (100 * correct / total))
 
-
-testSet = f['test']
-Features = testSet['features']
-Labels= testSet['labels']
+Features = f1['test/features']
+Labels= f['test/labels']
 
 testSet = CustomDataset(Features,Labels)
 testDataloader = torch.utils.data.DataLoader(testSet, batch_size=60, shuffle=False)
