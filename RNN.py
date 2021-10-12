@@ -217,7 +217,7 @@ print('Finished')
 """
 # Salvataggio
 net = NetRNN(input_size, hidden_sizes, output_size)
-PATH = './last.pth'
+PATH = './51.01_RNN.pth'
 net.load_state_dict(torch.load(PATH))
 
 Features = f['valid/features']
@@ -228,11 +228,14 @@ Labels3 = f1['valid/labels/share3']
 validationSet = CustomDataset(Features, Labels1, Labels2, Labels3)
 validDataloader = torch.utils.data.DataLoader(validationSet, batch_size=batch_size_valid_and_test, shuffle=False)
 
+"""
+
 first_share = 0
 second_share = 0
 third_share = 0
 correct = 0
 total = 0
+again=0
 # since we're not training, we don't need to calculate the gradients for our outputs
 with torch.no_grad():
     for data in validDataloader:
@@ -263,9 +266,13 @@ Labels1 = f1['test/labels/share1']
 Labels2 = f1['test/labels/share2']
 Labels3 = f1['test/labels/share3']
 
+"""
+
 testSet = CustomDataset(Features, Labels1, Labels2, Labels3)
 testDataloader = torch.utils.data.DataLoader(testSet, batch_size=batch_size_valid_and_test, shuffle=False)
 
+
+"""
 first_share = 0
 second_share = 0
 third_share = 0
@@ -333,5 +340,87 @@ print("\n")
 for classname, correct_count in correct_pred.items():
     accuracy = 100 * float(correct_count) / total_pred[classname]
     print("Accuracy for class {:2s} is: {:.1f} %".format(classname,
-                                                         accuracy))
+                                                       accuracy))
+    
+"""
+
+true_matrix_1 = np.empty([0,3])
+false_matrix_1 = np.empty([0,3])
+true_matrix_2 = np.empty([0,4])
+false_matrix_2 = np.empty([0,4])
+true_matrix_3 = np.empty([0,4])
+false_matrix_3 = np.empty([0,4])
+
+sm = torch.nn.Softmax(dim=0)
+
+with torch.no_grad():
+    for data in testDataloader:
+        images, labels1, labels2, labels3 = data
+        output1, output2, output3 = net(images, batch_size_valid_and_test)
+        # the class with the highest energy is what we choose as prediction
+        _, predicted1 = torch.max(output1.data, 1)
+        _, predicted2 = torch.max(output2.data, 1)
+        _, predicted3 = torch.max(output3.data, 1)
+        for i in range(len(predicted1)):
+            if predicted1[i] == labels1[i]:
+                probability= sm(output1[i])
+                probability = probability.numpy()
+                true_matrix_1 = np.append(true_matrix_1, [probability], axis=0)
+            else:
+                probability= sm(output1[i])
+                probability = probability.numpy()
+                false_matrix_1 = np.append(false_matrix_1, [probability], axis=0)
+
+            if predicted2[i] == labels2[i]:
+                probability= sm(output2[i])
+                probability = probability.numpy()
+                true_matrix_2 = np.append(true_matrix_2, [probability], axis=0)
+            else:
+                probability= sm(output2[i])
+                probability = probability.numpy()
+                false_matrix_2 = np.append(false_matrix_2, [probability], axis=0)
+
+            if predicted3[i] == labels3[i]:
+                probability= sm(output3[i])
+                probability = probability.numpy()
+                true_matrix_3 = np.append(true_matrix_3, [probability], axis=0)
+            else:
+                probability= sm(output3[i])
+                probability = probability.numpy()
+                false_matrix_3 = np.append(false_matrix_3, [probability], axis=0)
+
+### show all numpy array
+np.set_printoptions(threshold=np.inf)
+
+"""
+print(true_matrix_2.shape)
+print(false_matrix_2.shape)
+print(false_matrix_2)
+
+print(true_matrix_1.dtype)
+
+### True labels for sharing
+
+Features_test = f['train/features']
+Labels1_test = f1['train/labels/share1']
+Labels2_test = f1['train/labels/share2']
+Labels3_test = f1['train/labels/share3']
+
+print(Labels2_test[:])
+
+newfile = h5py.File('ProbabilityDistribution.h5', 'a')
+newfile.create_dataset('share1/true', true_matrix_1.shape , dtype='float64', data=true_matrix_1)
+newfile.create_dataset('share1/false', false_matrix_1.shape , dtype='float64', data=false_matrix_1)
+newfile.create_dataset('share2/true', true_matrix_2.shape , dtype='float64', data=true_matrix_2)
+newfile.create_dataset('share2/false', false_matrix_2.shape , dtype='float64', data=false_matrix_2)
+newfile.create_dataset('share3/true', true_matrix_3.shape , dtype='float64', data=true_matrix_3)
+newfile.create_dataset('share3/false', false_matrix_3.shape , dtype='float64', data=false_matrix_3)
+
+"""
+
+f = h5py.File('ProbabilityDistribution.h5', 'r')
+x= f['share1/true']
+print("x= ", x[0])
+print("\n")
+print("true_matrix_1= ", true_matrix_1[0])
 
