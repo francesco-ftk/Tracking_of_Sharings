@@ -342,7 +342,7 @@ for classname, correct_count in correct_pred.items():
     print("Accuracy for class {:2s} is: {:.1f} %".format(classname,
                                                        accuracy))
     
-"""
+### Probability Distribution
 
 true_matrix_1 = np.empty([0,3])
 false_matrix_1 = np.empty([0,3])
@@ -388,6 +388,8 @@ with torch.no_grad():
                 probability= sm(output3[i])
                 probability = probability.numpy()
                 false_matrix_3 = np.append(false_matrix_3, [probability], axis=0)
+                
+"""
 
 ### show all numpy array
 np.set_printoptions(threshold=np.inf)
@@ -422,5 +424,9 @@ f = h5py.File('ProbabilityDistribution.h5', 'r')
 x= f['share1/true']
 print("x= ", x[0])
 print("\n")
-print("true_matrix_1= ", true_matrix_1[0])
+y= np.empty([0,0])
+print(y)
+y = np.concatenate((y,x[0]), axis=None)
+y = np.concatenate((y,x[1]), axis=None)
+print(y)
 
